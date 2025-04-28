@@ -1,5 +1,6 @@
+import React, { useContext, useEffect } from 'react';
+import { UserContext } from '../App';
 
-import React from 'react';
 import DashboardCard01 from '../partials/dashboard/DashboardCard01';
 import DashboardCard02 from '../partials/dashboard/DashboardCard02';
 import DashboardCard03 from '../partials/dashboard/DashboardCard03';
@@ -15,6 +16,13 @@ import DashboardCard12 from '../partials/dashboard/DashboardCard12';
 import DashboardCard13 from '../partials/dashboard/DashboardCard13';
 
 function Dashboard() {
+
+   // title name of header
+  const {setSectionName} = useContext(UserContext);
+   useEffect(()=>{
+     setSectionName("Dashboard");
+   },[])
+ 
   return (
    <>
 

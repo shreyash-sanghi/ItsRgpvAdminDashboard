@@ -13,7 +13,7 @@ const routes = [
       },
       {
         path: '/add-achievements',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Add Achievements',
       },
     ]
@@ -25,13 +25,13 @@ const routes = [
     submenu: [
       {
         path: '/all-advice-and-demand',
-        icon: <MdImage className="w-6 h-6" />,
-        name: 'All Advice and Demand',
+        icon: <MdImage className="w-4 h-4" />,
+        name: 'Advice',
       },
       {
         path: '/add-advice-and-demand',
-        icon: <MdInfo className="w-6 h-6" />,
-        name: 'Add Advice and Demand',
+        icon: <MdInfo className="w-4 h-4" />,
+        name: 'Add Advice',
       },
     ]
   },
@@ -42,12 +42,12 @@ const routes = [
     submenu: [
       {
         path: '/all-books',
-        icon: <MdImage className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'All Books',
       },
       {
         path: '/add-book',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Add Book',
       },
     ]
@@ -59,12 +59,12 @@ const routes = [
     submenu: [
       {
         path: '/all-clubs',
-        icon: <MdImage className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'All Clubs',
       },
       {
         path: '/add-club',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Add Club',
       },
     ]
@@ -81,12 +81,12 @@ const routes = [
     submenu: [
       {
         path: '/department-image',
-        icon: <MdImage className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'Department Image',
       },
       {
         path: '/department-info',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Department Info',
       },
     ],
@@ -98,12 +98,12 @@ const routes = [
     submenu: [
       {
         path: '/all-events',
-        icon: <MdImage className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'All  Events',
       },
       {
         path: '/add-event',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Add Event',
       },
     ]
@@ -114,15 +114,15 @@ const routes = [
     name: 'Fests',
     submenu: [
       {
-        path: '/add-fests',
-        icon: <MdImage className="w-6 h-6" />,
-        name: 'Add fests',
-      },
-      {
         path: '/fests',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'Fests',
       },
+      {
+        path: '/add-fests',
+        icon: <MdInfo className="w-4 h-4" />,
+        name: 'Add fests',
+      }
     ],
 
   },
@@ -133,12 +133,12 @@ const routes = [
     submenu: [
       {
         path: '/all-hostel-info',
-        icon: <MdImage className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'All Hostel Info',
       },
       {
         path: '/add-hostel-info',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Add Hostel Info',
       },
     ]
@@ -150,12 +150,12 @@ const routes = [
     submenu: [
       {
         path: '/all-notes',
-        icon: <MdImage className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'All Notes',
       },
       {
         path: '/add-notes',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Add Notes',
       },
     ]
@@ -167,12 +167,12 @@ const routes = [
     submenu: [
       {
         path: '/all-placement-data',
-        icon: <MdImage className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'All Placement Data',
       },
       {
         path: '/add-placement-data',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Add Placement Data',
       },
     ]
@@ -184,33 +184,33 @@ const routes = [
     submenu: [
       {
         path: '/all-pyq',
-        icon: <MdImage className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'All Pyq',
       },
       {
         path: '/add-pyq',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Add Pyq',
       },
     ]
   },
   {
-    path: '/reels-and-video',
+    path: '/',
     icon: <MdVideoLibrary className="w-6 h-6" />,
     name: 'Reels and Video',
     submenu: [
       {
         path: '/all-reels-and-video',
-        icon: <MdImage className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'All Reels and Video',
       },
       {
         path: '/add-reels-and-video',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Add Reels and Video',
       },
     ]
-
+    
   },
   {
     path: '/',
@@ -219,12 +219,12 @@ const routes = [
     submenu: [
       {
         path: '/all-scholarships',
-        icon: <MdImage className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'All Scholarships',
       },
       {
         path: '/add-scholarships',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Add Scholarships',
       },
     ]
@@ -235,14 +235,14 @@ const routes = [
     name: 'Startups',
     submenu: [
       {
-        path: '/add-Startups',
-        icon: <MdImage className="w-6 h-6" />,
-        name: 'Add Startups',
-      },
-      {
         path: '/Startups',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'Startups',
+      }, 
+      {
+        path: '/add-Startups',
+        icon: <MdInfo className="w-4 h-4" />,
+        name: 'Add Startups',
       },
     ],
 
@@ -255,12 +255,12 @@ const routes = [
     submenu: [
       {
         path: '/all-users',
-        icon: <MdImage className="w-6 h-6" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'All Users',
       },
       {
         path: '/add-users',
-        icon: <MdInfo className="w-6 h-6" />,
+        icon: <MdInfo className="w-4 h-4" />,
         name: 'Add Users',
       },
     ]
@@ -272,7 +272,7 @@ const routes = [
     submenu: [
       {
         path: '/roles',
-        icon: <MdImage className="w-3 h-3" />,
+        icon: <MdImage className="w-4 h-4" />,
         name: 'Roles',
       },
     ]

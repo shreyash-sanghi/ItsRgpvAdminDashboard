@@ -1,10 +1,18 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import Button from "../../ui/button";
 import InputField from "../../ui/input";
 import { addRoles } from "../../../api/api";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { UserContext } from "../../../App";
+import { useContext } from "react";
 
 const AddEvent = () => {
+
+  // title name of header
+  const {setSectionName} = useContext(UserContext);
+  useEffect(()=>{
+    setSectionName("Add Event");
+  },[])
   const [event, setEvent] = useState({
     roleName: "",
     secretKey: "",

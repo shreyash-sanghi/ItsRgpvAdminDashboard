@@ -1,34 +1,37 @@
-import Achievements from "../pages/Achievements";
-import AddAchievement from "../pages/AddAchievement";
-import AddBook from "../pages/Addbook";
-import AddClub from "../pages/addclub";
-import AdviceAndDemand from "../pages/AdviceAndDemand";
-import Books from "../pages/Books";
-import Clubs from "../pages/Clubs";
+import Achievements from "../pages/achievements/Achievements";
+import AddAchievement from "../pages/achievements/AddAchievement";
+import AddBook from "../pages/books/Addbook";
+import AddClub from "../pages/clubs/Addclub";
+import AllAdvice from "../pages/advicendemand/AllAdvice";
+import AdviceAndDemand from "../pages/advicendemand/AdviceAndDemand";
+import Books from "../pages/books/Books";
+import Clubs from "../pages/clubs/Clubs";
 import Dashboard from "../pages/Dashboard";
-import DepartmentImage from "../pages/DepartmentImage";
-import DepartmentInfo from "../pages/DepartmentInfo";
-import Departments from "../pages/Departments";
-import Fests from "../pages/Fests";
-import ReelsAndVideo from "../pages/ReelsAndVideo";
-import AddFest from "../pages/AddFest"
-import Roles from "../pages/Roles"
-import AddStartups from "../components/startups/addStartups";
-import Startups from "../components/startups/Startups";
-import AddPlacementData from "../components/placements/addPlacementData";
-import Placement from "../components/placements/placement";
-import users from "../components/users/users";
-import AddUsers from "../components/users/addUsers";
-import AddEvents from "../components/events/addevent"
-import Event from "../components/events/events";
-import HostelInfo from "../components/hostels/hostel";
-import AddHostelInfo from "../components/hostels/addhostel";
-import Pyq from "../components/pyqs/Pyq";
-import AddPyq from "../components/pyqs/addPyq";
-import Notes from "../components/notes/Notes";
-import AddNotes from "../components/notes/addnotes";
-import Scholarships from "../components/scholerships/scholership";
-import AddScholarships from "../components/scholerships/addscholarships"
+import DepartmentImage from "../pages/department/DepartmentImage";
+import DepartmentInfo from "../pages/department/DepartmentInfo";
+import Departments from "../pages/department/Departments";
+import Fests from "../pages/fests/Fests";
+import ReelsAndVideo from "../pages/reelsnvideos/ReelsAndVideo";
+import AddReelsAndVideo from "../pages/reelsnvideos/AddReelsAndVideo";
+import AddFest from "../pages/fests/AddFest"
+import Roles from "../pages/dynamicoption/Roles"
+import AddStartups from "../pages/startups/addStartups";
+import Startups from "../pages/startups/startups";
+import AddPlacementData from "../pages/placements/addPlacementData";
+import Placement from "../pages/placements/placement";
+import users from "../pages/users/users";
+import AddUsers from "../pages/users/addusers";
+import AddEvents from "../pages/events/addevent"
+import Event from "../pages/events/events";
+import HostelInfo from "../pages/hostels/hostel";
+import AddHostelInfo from "../pages/hostels/addhostel";
+import Pyq from "../pages/pyqs/pyq";
+import AddPyq from "../pages/pyqs/addPyq";
+import Notes from "../pages/notes/notes";
+import AddNotes from "../pages/notes/addnotes";
+import Scholarships from "../pages/scholarships/Scholarship";
+import AddScholarships from "../pages/scholarships/Addscholarships"
+
 const routes = [
   {
     path: '/dashboard', // the url
@@ -45,7 +48,7 @@ const routes = [
   },
 
   {
-    path: '/department-photo',
+    path: '/department-image',
     component: DepartmentImage,
   },
   {
@@ -61,11 +64,13 @@ const routes = [
     component: AddAchievement,
   },
   {
-    path: '/advice-and-demand',
+    path: '/all-advice-and-demand',
+    component : AllAdvice,
+  },
+  {
+    path: '/add-advice-and-demand',
     component: AdviceAndDemand,
   },
-
-
   {
     path: '/all-books',
     component: Books,
@@ -90,7 +95,6 @@ const routes = [
     path: '/add-fests',
     component: AddFest,
   },
-
   {
     path: '/all-hostel-info',
     component: HostelInfo,
@@ -103,34 +107,33 @@ const routes = [
     path: '/all-notes',
     component: Notes,
   },
-
   {
     path: '/add-notes',
     component: AddNotes,
   },
-
   {
     path: '/all-placement-data',
     component: Placement,
   },
-
   {
     path: '/add-placement-data',
     component: AddPlacementData,
   },
-
   {
     path: '/all-pyq',
     component: Pyq,
   },
-
   {
     path: '/add-pyq',
     component: AddPyq,
   },
   {
-    path: '/reels-and-video',
+    path: '/all-reels-and-video',
     component: ReelsAndVideo,
+  },
+  {
+    path: '/add-reels-and-video',
+    component: AddReelsAndVideo,
   },
   {
     path: '/all-scholarships',
@@ -156,7 +159,7 @@ const routes = [
     path: '/all-users',
     component: users,
   },
-  
+
   // Dynamic option
   {
     path: '/roles',

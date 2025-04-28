@@ -1,9 +1,11 @@
-import React from 'react'
+import React, { useContext, useEffect } from 'react'
+
 
 export default function DepartmentPhoto() {
+
   return (
     <div>
-      Department Photo
+      Department Photo  
     </div>
   )
 }
