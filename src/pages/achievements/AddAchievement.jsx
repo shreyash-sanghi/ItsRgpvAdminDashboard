@@ -6,6 +6,7 @@ import Select from "../../components/ui/select";
 import { addAchievement } from "../../api/api";
 import { useContext } from "react";
 import { UserContext } from "../../App";
+import { addAchivement } from "../../api/allApi/achivement";
 
 
 
@@ -65,40 +66,14 @@ const AddAchievement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Achievement Data:", achievement);
-
-    try {
-      const response = await addAchievement(achievement);
-      if (response.status === 201) {
-        console.log("Success:", response.data);
-        alert("Achievement added successfully!");
-      } else {
-        console.log("Error:", response.data);
-        alert("Failed to add achievement.");
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      alert("An error occurred. Please try again.");
+    try{
+     console.log(achievement)
+     const response = await addAchivement(achievement);
+     alert("success");
+    }catch(error){
+      console.log(error);
+      alert(error);
     }
-
-    setAchievement({
-      firstName: "",
-      lastName: "",
-      email: "",
-      Year: "",
-      achievementDate: "",
-      branch: "",
-      fieldOfAchievement: [""],
-      enrollmentNumber: "",
-      department: "",
-      achievementTitle: "",
-      semester: "",
-      achievementDescription: "",
-      recognitionLevel: "",
-      awards: "",
-      photos: "",
-      socialMediaLinks: [""],
-    });
   };
 
   useEffect(() => {
