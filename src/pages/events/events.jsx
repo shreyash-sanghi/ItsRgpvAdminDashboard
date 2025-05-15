@@ -1,31 +1,16 @@
-import React,{useContext, useEffect} from 'react'
-import { getAllEvents } from '../../api/api';
+import React, { useEffect } from 'react'
 import { UserContext } from '../../App';
+import { useContext } from 'react';
+import Events from '../../components/events/Events';
 
-const Events = () => {
+const EventsPage = () => {
+  const { setSectionName } = useContext(UserContext);
+  
+  useEffect(() => {
+    setSectionName("Events");
+  }, []);
 
-    const {setSectionName} = useContext(UserContext);
-    useEffect(()=>{
-        setSectionName("Events");
-    },[])
-
-    useEffect(() => {
-        const fetchData = async () => {
-            const response = await getAllEvents();
-            if (response.status === 200) {
-                console.log(response.data)
-            }
-            else {
-                console.log("Error", response);
-            }
-        }
-        fetchData()
-    }
-    , []);
-
-  return (
-    <div>events</div>
-  )
+  return <Events />
 }
 
-export default Events
+export default EventsPage

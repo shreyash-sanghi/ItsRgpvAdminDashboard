@@ -1,15 +1,15 @@
-import React, { useContext, useEffect } from 'react'
-import { UserContext } from '../../App';
+import React, { useEffect, useContext } from "react";
+import { UserContext } from "../../App";
+import AddReelsAndVideos from "../../components/reelsnvideos/AddReelsAndVideos";
 
-function AddReelsAndVideo() {
+const AddReelsAndVideoPage = () => {
+  const { setSectionName } = useContext(UserContext);
 
-    const {setSectionName} = useContext(UserContext);
-    useEffect(()=>{
-        setSectionName("Add Reels and Videos")
-    },[])
-  return (
-    <div>AddReelsAndVideo</div>
-  )
-}
+  useEffect(() => {
+    setSectionName("Add Reels and Videos");
+  }, []);
 
-export default AddReelsAndVideo;
+  return <AddReelsAndVideos />;
+};
+
+export default AddReelsAndVideoPage;

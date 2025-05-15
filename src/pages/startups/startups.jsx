@@ -1,32 +1,15 @@
-import React, { useEffect } from 'react'
-import { getAllStartups } from '../../api/api';
-import { UserContext } from '../../App';
-import { useContext } from 'react';
+import React, { useEffect, useContext } from "react";
+import { UserContext } from "../../App";
+import Startups from "../../components/startups/Startups";
 
-const Startups = () => {
+const StartupsPage = () => {
+  const { setSectionName } = useContext(UserContext);
 
-  // title name of header
-  const {setSectionName} = useContext(UserContext);
-  useEffect(()=>{
+  useEffect(() => {
     setSectionName("Startups");
-  },[])
+  }, [setSectionName]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const response = await getAllStartups();
-            if (response.status === 200) {
-                console.log(response.data)
-            }
-            else {
-                console.log("Error", response);
-            }
-        }
-        fetchData()
-    }, []);
+  return <Startups />;
+};
 
-  return (
-    <div>Startups</div>
-  )
-}
-
-export default Startups
+export default StartupsPage;

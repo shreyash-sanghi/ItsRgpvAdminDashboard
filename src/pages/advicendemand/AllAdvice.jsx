@@ -1,16 +1,16 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { UserContext } from '../../App';
+import { useContext } from 'react';
+import AllAdvice from '../../components/advicendemand/AllAdvice';
 
-function AllAdvice() {
+const AllAdvicePage = () => {
+  const { setSectionName } = useContext(UserContext);
+  
+  useEffect(() => {
+    setSectionName("All Advice");
+  }, []);
 
-    const {setSectionName} = useContext(UserContext);
-    useEffect(()=>{
-        setSectionName("All Advice");
-    },[])
-
-  return (
-    <div>All Advice</div>
-  )
+  return <AllAdvice />
 }
 
-export default AllAdvice;
+export default AllAdvicePage

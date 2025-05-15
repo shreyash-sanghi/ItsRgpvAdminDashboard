@@ -10,6 +10,7 @@ import Sidebar from "./containers/LeftsideBar";
 import routes from './routes/index';
 import Header from './containers/Header';
 const UserContext = createContext();
+
 function App() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);

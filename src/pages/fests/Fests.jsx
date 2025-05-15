@@ -1,32 +1,15 @@
-import React,{useEffect} from 'react'
-import { getAllFests } from '../../api/api';
-import { UserContext } from '../../App';
-import { useContext } from 'react';
+import React, { useEffect, useContext } from "react";
+import { UserContext } from "../../App";
+import Fests from "../../components/fests/Fests";
 
-const Fests = () => {
-
-// title name on header
-const {setSectionName} = useContext(UserContext);
-useEffect(()=>{
-  setSectionName("Fests");
-},[])
-
+const FestsPage = () => {
+  const { setSectionName } = useContext(UserContext);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await getAllFests();
-      if (response.status === 200) {
-        console.log(response.data)
-      }
-      else {
-        console.log("Error", response);
-      }
-    }
-    fetchData()
+    setSectionName("Fests");
   }, []);
-  return (
-    <div>Fests</div>
-  )
-}
 
-export default Fests
+  return <Fests />;
+};
+
+export default FestsPage;

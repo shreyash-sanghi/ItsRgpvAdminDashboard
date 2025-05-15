@@ -1,31 +1,15 @@
-import React,{useEffect} from 'react'
-import { getAllUsers } from '../../api/api';
-import { UserContext } from '../../App';
-import { useContext } from 'react';
+import React, { useEffect, useContext } from "react";
+import { UserContext } from "../../App";
+import Users from "../../components/users/users";
 
-const Users = () => {
+const UsersPage = () => {
+  const { setSectionName } = useContext(UserContext);
 
-  // title name of header
-  const {setSectionName} = useContext(UserContext);
-  useEffect(()=>{
+  useEffect(() => {
     setSectionName("Users");
-  },[])
-    useEffect(() => {
-        const fetchData = async () => {
-            const response = await getAllUsers();
-            if (response.status === 200) {
-                console.log(response.data)
-            }
-            else {
-                console.log("Error", response);
-            }
-        }
-        fetchData()
-    }, []);
+  }, [setSectionName]);
 
-  return (
-    <div>users</div>
-  )
-}
+  return <Users />;
+};
 
-export default Users
+export default UsersPage;

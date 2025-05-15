@@ -1,32 +1,16 @@
-import React,{useEffect} from 'react'
-import { getAllDepartments } from '../../api/api';
+import React, { useEffect } from 'react'
 import { UserContext } from '../../App';
 import { useContext } from 'react';
+import Departments from '../../components/department/Departments'
 
-const Departments = () => {
-
-  // title name of header
-  const {setSectionName} = useContext(UserContext);
-  useEffect(()=>{
-    setSectionName("Departments");
-  },[])
-
+const DepartmentPage = () => {
+  const { setSectionName } = useContext(UserContext);
+  
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await getAllDepartments();
-      if (response.status === 200) {
-        console.log(response.data)
-      }
-      else {
-        console.log("Error", response);
-      }
-    }
-    fetchData()
+    setSectionName("All Departments");
   }, []);
 
-  return (
-    <div>Departments</div>
-  )
+  return <Departments />
 }
 
-export default Departments
+export default DepartmentPage;

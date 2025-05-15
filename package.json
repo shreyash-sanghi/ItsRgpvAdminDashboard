@@ -13,6 +13,7 @@
     "axios": "^1.7.9",
     "chart.js": "^4.4.1",
     "chartjs-adapter-moment": "^1.0.1",
+    "cloudinary": "^2.6.1",
     "clsx": "^2.1.1",
     "moment": "^2.29.4",
     "react": "^19.0.0",

@@ -1,10 +1,10 @@
-import Instance from "../axios";
+import {Instance,formInstance} from "../axios";
 
-const apiType = "achivement";
+const apiType = "achievement";
 
-export const addAchivement = async(data)=>{
+export const addAchievement = async(data)=>{
     try {
-        const result = Instance.post(`/${apiType}/add-achievement`,data);
+        const result = await formInstance.post(`/${apiType}/add-achievement`, data);
         return result;
     } catch (error) {
         throw error;
@@ -13,9 +13,36 @@ export const addAchivement = async(data)=>{
 
 export const getAllachievements = async()=>{
     try {
-        const result = Instance.get(`/${apiType}/get-achievements`);
+        const result = await Instance.get(`/${apiType}/get-achievements`);
         return result;
     } catch (error) {
+        throw error;
+    }
+}
+
+export const getAchievementById = async(id)=> {
+    try {
+        const result = await Instance.get(`/${apiType}/get-achievements/${id}`);
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const editAchievement = async(id,data)=> {
+    try{
+        const result = await Instance.put(`/${apiType}/edit-achievements/${id}`);
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const deleteAchievement = async(id) => {
+    try {
+        const result = await Instance.delete(`/${apiType}/delete-achievements/${id}`);
+        return result;
+    } catch(error){
         throw error;
     }
 }

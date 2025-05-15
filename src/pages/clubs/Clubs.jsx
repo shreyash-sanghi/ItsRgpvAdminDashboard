@@ -1,33 +1,16 @@
-import React,{useEffect} from 'react'
-import { getAllClubs } from '../../api/api';
+import React, { useEffect } from 'react'
 import { UserContext } from '../../App';
 import { useContext } from 'react';
+import Clubs from '../../components/clubs/Clubs';
 
-
-const Clubs = () => {
-
-  // title name of header
-  const {setSectionName} = useContext(UserContext);
-  useEffect(()=>{
-    setSectionName("Clubs");
-  },[])
-
+const ClubsPage = () => {
+  const { setSectionName } = useContext(UserContext);
+  
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await getAllClubs();
-      if (response.status === 200) {
-        console.log(response.data)
-      }
-      else {
-        console.log("Error", response);
-      }
-    }
-    fetchData() 
+    setSectionName("Clubs");
   }, []);
 
-  return (
-    <div>Clubs</div>
-  )
+  return <Clubs />
 }
 
-export default Clubs
+export default ClubsPage

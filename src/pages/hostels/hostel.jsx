@@ -1,32 +1,15 @@
-import React, {useEffect}from 'react'
-import { getAllHostelInfo } from '../../api/api';
-import { useContext } from 'react';
-import { UserContext } from '../../App';
+import React, { useEffect, useContext } from "react";
+import { UserContext } from "../../App";
+import Hostels from "../../components/hostels/Hostels";
 
-const Hostel = () => {
+const HostelPage = () => {
+  const { setSectionName } = useContext(UserContext);
 
-  // section name to header
-  const {setSectionName} = useContext(UserContext);
+  useEffect(() => {
+    setSectionName("Hostels");
+  }, []);
 
-  useEffect(()=>{
-    setSectionName("Hostels")
-  },[]);
+  return <Hostels />;
+};
 
-    useEffect(() => {
-        const fetchData = async () => {
-        const response = await getAllHostelInfo();
-        if (response.status === 200) {
-            console.log(response.data)
-        }
-        else {
-            console.log("Error", response);
-        }
-        }
-        fetchData()
-    }, []);
-  return (
-    <div>hostel</div>
-  )
-}
-
-export default Hostel;
+export default HostelPage;

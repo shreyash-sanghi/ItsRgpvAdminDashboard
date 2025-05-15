@@ -13,15 +13,15 @@ import Departments from "../pages/department/Departments";
 import Fests from "../pages/fests/Fests";
 import ReelsAndVideo from "../pages/reelsnvideos/ReelsAndVideo";
 import AddReelsAndVideo from "../pages/reelsnvideos/AddReelsAndVideo";
-import AddFest from "../pages/fests/AddFest"
-import Roles from "../pages/dynamicoption/Roles"
-import AddStartups from "../pages/startups/addStartups";
+import AddFest from "../pages/fests/AddFest";
+import Roles from "../pages/dynamicoption/Roles";
+import AddStartup from "../pages/startups/addstartup";
 import Startups from "../pages/startups/startups";
 import AddPlacementData from "../pages/placements/addPlacementData";
 import Placement from "../pages/placements/placement";
-import users from "../pages/users/users";
-import AddUsers from "../pages/users/addusers";
-import AddEvents from "../pages/events/addevent"
+import UsersPage from "../pages/users/users";
+import AddUserPage from "../pages/users/adduser";
+import AddEvents from "../pages/events/addevent";
 import Event from "../pages/events/events";
 import HostelInfo from "../pages/hostels/hostel";
 import AddHostelInfo from "../pages/hostels/addhostel";
@@ -30,23 +30,21 @@ import AddPyq from "../pages/pyqs/addPyq";
 import Notes from "../pages/notes/notes";
 import AddNotes from "../pages/notes/addnotes";
 import Scholarships from "../pages/scholarships/Scholarship";
-import AddScholarships from "../pages/scholarships/Addscholarships"
+import AddScholarships from "../pages/scholarships/Addscholarships";
 
 const routes = [
   {
-    path: '/dashboard', // the url
-    component: Dashboard, // view rendered
+    path: '/dashboard',
+    component: Dashboard,
   },
   {
-    path: '/all-events', // the url
-    component: Event, // view rendered
+    path: '/all-events',
+    component: Event,
   },
-
   {
-    path: '/add-event', // the url
-    component: AddEvents, // view rendered
+    path: '/add-event',
+    component: AddEvents,
   },
-
   {
     path: '/department-image',
     component: DepartmentImage,
@@ -65,7 +63,7 @@ const routes = [
   },
   {
     path: '/all-advice-and-demand',
-    component : AllAdvice,
+    component: AllAdvice,
   },
   {
     path: '/add-advice-and-demand',
@@ -145,7 +143,7 @@ const routes = [
   },
   {
     path: '/add-startups',
-    component: AddStartups,
+    component: AddStartup,
   },
   {
     path: '/startups',
@@ -153,19 +151,16 @@ const routes = [
   },
   {
     path: '/add-users',
-    component: AddUsers,
+    component: AddUserPage,
   },
   {
     path: '/all-users',
-    component: users,
+    component: UsersPage,
   },
-
-  // Dynamic option
   {
     path: '/roles',
     component: Roles,
   },
-  
 ];
 
 export default routes;

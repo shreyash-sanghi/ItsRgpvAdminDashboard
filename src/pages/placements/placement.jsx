@@ -1,35 +1,15 @@
-import React,{useEffect} from 'react'
-import { getAllPlacements } from '../../api/api';
-import { UserContext } from '../../App';
-import {useContext} from 'react'
+import React, { useEffect, useContext } from "react";
+import { UserContext } from "../../App";
+import Placements from "../../components/placements/Placements";
 
-const Placement = () => { 
-
-   // section name to header
-   const {setSectionName} = useContext(UserContext);
-   useEffect(()=>{
-     setSectionName("All Placement Data");
-   },[])
-
+const PlacementPage = () => {
+  const { setSectionName } = useContext(UserContext);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await getAllPlacements();
-      if (response.status === 200) {
-        console.log(response.data)
-      }
-      else {
-        console.log("Error", response);
-      }
-    }
-    fetchData()
+    setSectionName("All Placement Data");
   }, []);
 
-  return (
-    <div>
-      Placements
-    </div>
-  )
-}
+  return <Placements />;
+};
 
-export default Placement
+export default PlacementPage;

@@ -1,4 +1,4 @@
-import Instance from './axios.js'
+import {Instance , formInstance} from './axios.js'
 
 
 // -------------------- Achievements -------------------- //
@@ -183,7 +183,7 @@ export const getAllFests = async () => {
 
 export const addFest = async (data) => {
     try {
-        const response = await Instance.post('/fest/add-fest', data);
+        const response = await formInstance.post('/fest/add-fest', data);
         return response;
     }
     catch (error) {
@@ -305,3 +305,23 @@ export const addRoles = async (data) => {
 //         throw error;
 //     }
 // };
+
+// -------------------- Reels and Videos -------------------- //
+
+export const getAllReelsAndVideos = async () => {
+  try {
+    const response = await Instance.get('/reelsnvideos/get-reelsnvideos');
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addReelsAndVideos = async (data) => {
+  try {
+    const response = await Instance.post('/reelsnvideos/add-reelsnvideos', data);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};

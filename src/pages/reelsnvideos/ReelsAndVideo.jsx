@@ -1,18 +1,15 @@
-import React, { useContext, useEffect } from 'react'
-import { UserContext } from '../../App';
+import React, { useEffect, useContext } from "react";
+import { UserContext } from "../../App";
+import ReelsAndVideos from "../../components/reelsnvideos/ReelsAndVideos";
 
-const ReelsAndVideo = () => {
+const ReelsAndVideoPage = () => {
+  const { setSectionName } = useContext(UserContext);
 
-  // title name of header
-  const {setSectionName} = useContext(UserContext);
-  useEffect(()=>{
-    setSectionName("Reels and Video");
-  },[])
+  useEffect(() => {
+    setSectionName("Reels and Videos");
+  }, []);
 
+  return <ReelsAndVideos />;
+};
 
-  return (
-    <div>Reels And Video</div>
-  )
-}
-
-export default ReelsAndVideo;
+export default ReelsAndVideoPage;

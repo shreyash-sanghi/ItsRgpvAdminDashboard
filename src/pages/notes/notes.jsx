@@ -1,31 +1,15 @@
-import React,{useEffect} from 'react'
-import { getAllNotes } from '../../api/api';
-import { useContext } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { UserContext } from '../../App';
+import Notes from '../../components/notes/Notes';
 
-const Notes = () => {
-
-   // section name to header
-   const {setSectionName} = useContext(UserContext);
-   useEffect(()=>{
-     setSectionName("Notes");
-   },[])
-
+const NotesPage = () => {
+  const { setSectionName } = useContext(UserContext);
+  
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await getAllNotes();
-      if (response.status === 200) {
-        console.log(response.data)
-      }
-      else {
-        console.log("Error", response);
-      }
-    }
-    fetchData()
+    setSectionName("Notes");
   }, []);
-  return (
-    <div>Notes</div>
-  )
-}
 
-export default Notes
+  return <Notes />;
+};
+
+export default NotesPage;

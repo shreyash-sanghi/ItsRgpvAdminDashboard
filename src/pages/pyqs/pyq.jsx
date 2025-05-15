@@ -1,30 +1,15 @@
-import React,{useContext, useEffect} from 'react'
-import { getAllPyq } from '../../api/api';
-import { UserContext } from '../../App';
+import React, { useEffect, useContext } from "react";
+import { UserContext } from "../../App";
+import Pyqs from "../../components/pyqs/PYQs";
 
-const Pyq = () => {
-
-  const {setSectionName} = useContext(UserContext);
-
-  useEffect(()=>{
-    setSectionName("PYQ's");
-  },[])
+const PyqPage = () => {
+  const { setSectionName } = useContext(UserContext);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await getAllPyq();
-      if (response.status === 200) {
-        console.log(response.data)
-      }
-      else {
-        console.log("Error", response);
-      }
-    }
-    fetchData()
+    setSectionName("PYQ's");
   }, []);
-  return (
-    <div>Pyq</div>
-  )
-}
 
-export default Pyq
+  return <Pyqs />;
+};
+
+export default PyqPage;

@@ -1,33 +1,15 @@
-import React,{useEffect} from 'react'
-import { getAllScholarships } from '../../api/api';
-import { UserContext } from '../../App';
-import { useContext } from 'react';
+import React, { useEffect, useContext } from "react";
+import { UserContext } from "../../App";
+import Scholarships from "../../components/scholarships/Scholarships";
 
+const ScholarshipPage = () => {
+  const { setSectionName } = useContext(UserContext);
 
-const Scholership = () => {
-
-  // title name of header
-  const {setSectionName} = useContext(UserContext);
-  useEffect(()=>{
+  useEffect(() => {
     setSectionName("Scholarships");
-  },[])
+  }, []);
 
-  
-    useEffect(() => {
-        const fetchData = async () => {
-        const response = await getAllScholarships();
-        if (response.status === 200) {
-            console.log(response.data)
-        }
-        else {
-            console.log("Error", response);
-        }
-        }
-        fetchData()
-    }, []);
-  return (
-    <div>scholership</div>
-  )
-}
+  return <Scholarships />;
+};
 
-export default Scholership
+export default ScholarshipPage;

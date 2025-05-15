@@ -1,26 +1,17 @@
-import React, { useState,useEffect } from "react";
-import Button from "../../components/ui/button";
-import InputField from "../../components/ui/input";
-import TextArea from "../../components/ui/textarea";
+import React, { useState } from "react";
+import Button from "../ui/button";
+import InputField from "../ui/input";
+import TextArea from "../ui/textarea";
 import { addUser } from "../../api/api";
-import { UserContext } from "../../App";
-import { useContext } from "react";
 
-const AddUsers = () => {
-
-  // title name of header
-  const {setSectionName} = useContext(UserContext);
-  useEffect(()=>{
-    setSectionName("Add Users");
-  },[])
-
+const AddUser = () => {
   const [user, setUser] = useState({
     firstName: "",
     lastName: "",
     email: "",
     contactNumber: "",
     dateOfBirth: null,
-    profilePicture: null, // Change this to null instead of an empty string
+    profilePicture: null,
     role: [],
     enrollmentNumber: "",
     department: "",
@@ -36,41 +27,52 @@ const AddUsers = () => {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0]; // Get the first selected file
+    const file = e.target.files[0];
     if (file) {
       setUser((prev) => ({
         ...prev,
-        profilePicture: file, // Store the file object
+        profilePicture: file,
       }));
     }
   };
 
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("User Data:", user);
+    try {
+      const formData = new FormData();
+      Object.keys(user).forEach((key) => {
+        if (key === 'role') {
+          formData.append(key, JSON.stringify(user[key]));
+        } else if (key === 'profilePicture' && user[key]) {
+          formData.append(key, user[key]);
+        } else {
+          formData.append(key, user[key]);
+        }
+      });
 
-    const response = await addUser(user);
-    if (response.status === 200) {
-      console.log("User Data:", response);
+      const response = await addUser(formData);
+      if (response.status === 200) {
+        console.log("User added successfully:", response);
+        // Reset form
+        setUser({
+          firstName: "",
+          lastName: "",
+          email: "",
+          contactNumber: "",
+          dateOfBirth: null,
+          profilePicture: null,
+          role: [],
+          enrollmentNumber: "",
+          department: "",
+          passoutYear: 0,
+          semester: 0,
+        });
+      } else {
+        console.error("Error adding user:", response);
+      }
+    } catch (error) {
+      console.error("Error adding user:", error);
     }
-    else {  
-      console.log("Error:", response);
-    }
-
-    // Reset form after submission
-    // setUser({
-    //   firstName: "",
-    //   lastName: "",
-    //   email: "",
-    //   contactNumber: "",
-    //   dateOfBirth: null,
-    //   profilePicture: null, // Reset to null
-    //   role: [],
-    //   enrollmentNumber: "",
-    //   department: "",
-    //   passoutYear: 0,
-    //   semester: 0,
-    // });
   };
 
   return (
@@ -141,11 +143,13 @@ const AddUsers = () => {
               <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Date of Birth
               </label>
-              <InputField
-                id="dateOfBirth"
+              <input
                 type="date"
+                id="dateOfBirth"
                 value={user.dateOfBirth || ""}
                 onChange={(e) => handleChange("dateOfBirth", e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
             <div>
@@ -155,7 +159,7 @@ const AddUsers = () => {
               <input
                 id="profilePicture"
                 type="file"
-                onChange={handleFileChange} // Use the file input handler
+                onChange={handleFileChange}
                 className="block w-full text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md p-2"
               />
             </div>
@@ -220,13 +224,22 @@ const AddUsers = () => {
             <label htmlFor="semester" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Semester
             </label>
-            <InputField
+            <select
               id="semester"
-              type="number"
               value={user.semester}
               onChange={(e) => handleChange("semester", e.target.value)}
-              placeholder="Enter semester"
-            />
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            >
+              <option value="">Select semester</option>
+              <option value="I">I</option>
+              <option value="II">II</option>
+              <option value="III">III</option>
+              <option value="IV">IV</option>
+              <option value="V">V</option>
+              <option value="VI">VI</option>
+              <option value="VII">VII</option>
+              <option value="VIII">VIII</option>
+            </select>
           </div>
         </section>
 
@@ -239,4 +252,4 @@ const AddUsers = () => {
   );
 };
 
-export default AddUsers;
+export default AddUser; 

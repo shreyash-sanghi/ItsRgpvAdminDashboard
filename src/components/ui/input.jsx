@@ -1,6 +1,6 @@
 import React from "react";
 
-const Input = ({ id, label, type, value, onChange, placeholder, required }) => {
+const Input = ({ id, label, type, value, onChange, placeholder, required, maxLength }) => {
   return (
     <div className="flex flex-col gap-2">
       {label && (

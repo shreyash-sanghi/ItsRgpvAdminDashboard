@@ -3,7 +3,7 @@ import Button from "../../components/ui/button";
 import InputField from "../../components/ui/input";
 import TextArea from "../../components/ui/textarea";
 import FileUpload from "../../components/ui/fileUpload"; // Import the FileUpload component
-import { addStartup } from "../../api/api";
+import { addStartup } from "../../api/allApi/startup.js";
 import { UserContext } from "../../App";
 import { useContext } from "react";
 
@@ -26,7 +26,7 @@ const AddStartups = () => {
     contactPhone: "",
     socialLinks: [""],
     offlineLocation: "",
-    startupLogo: "", // This will now store the file for logo
+    startupLogo: null, // This will now store the file for logo
   });
 
   const handleChange = (field, value) => {
@@ -45,31 +45,41 @@ const AddStartups = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Startup Data:", startup);
 
-    const response = await addStartup(startup);
-    if (response.status === 200) {
-      console.log("Startup Data:", response);
-    }
-    else {
-      console.log("Error:", response);
-    }
+    try {
+        const formData = new FormData();
 
-    // Reset form after submission
-    // setStartup({
-    //   startupName: "",
-    //   slogan: "",
-    //   description: "",
-    //   startupCategory: "",
-    //   dateOfEshtablishment: null,
-    //   founder: [""],
-    //   contactEmail: "",
-    //   contactPhone: "",
-    //   socialLinks: [""],
-    //   offlineLocation: "",
-    //   startupLogo: "", // Reset the logo field
-    // });
-  };
+        // Manually append each field to FormData
+        formData.append("startupName", startup.startupName);
+        formData.append("slogan", startup.slogan);
+        formData.append("description", startup.description);
+        formData.append("startupCategory", startup.startupCategory);
+        formData.append("dateOfEshtablishment", startup.dateOfEshtablishment);
+        formData.append("founder", JSON.stringify(startup.founder));  // Append array as a string
+        formData.append("contactEmail", startup.contactEmail);
+        formData.append("contactPhone", startup.contactPhone);
+        formData.append("socialLinks", JSON.stringify(startup.socialLinks));  // Append array as a string
+        formData.append("offlineLocation", startup.offlineLocation);
+        formData.append("formType", "startup")
+        // Manually handle file upload
+        if (startup.startupLogo) {
+            formData.append("startupLogo", startup.startupLogo);
+        }
+
+        // Make the API call with FormData
+        const response = await addStartup(formData);
+        if (response.status === 201) {
+            alert("Startup added successfully!");
+            console.log("Startup Data:", response.data);
+        } else {
+            alert("Error adding startup.");
+            console.error("Error:", response);
+        }
+    } catch (error) {
+        alert("Submission failed!");
+        console.error("Error during submission:", error);
+    }
+};
 
   return (
     <div className="flex flex-col bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
@@ -135,17 +145,16 @@ const AddStartups = () => {
               <label htmlFor="dateOfEstablishment" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Date of Establishment <span className="text-red-500">*</span>
               </label>
-              <InputField
-                id="dateOfEstablishment"
+              <input
                 type="date"
-                // value={startup.dateOfEstablishment || ""}
-                // onChange={(e) => handleChange("dateOfEstablishment", e.target.value)}
-                // required
+                id="dateOfEstablishment"
                 value={startup.dateOfEshtablishment ? new Date(startup.dateOfEshtablishment).toISOString().split('T')[0] : ""}
                 onChange={(e) => {
                   const date = new Date(e.target.value);
                   handleChange("dateOfEshtablishment", date.toISOString());
                 }}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 required
               />
             </div>

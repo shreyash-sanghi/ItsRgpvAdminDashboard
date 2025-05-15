@@ -1,30 +1,16 @@
-import React,{useContext, useEffect} from 'react'
-import { getAllBooks } from '../../api/api';
+import React, { useEffect } from 'react'
 import { UserContext } from '../../App';
+import { useContext } from 'react'
+import Books from '../../components/books/Books'
 
-const Books = () => {
-
-  const {setSectionName} = useContext(UserContext);
-  useEffect(()=>{
-    setSectionName("Books");
-  },[])
-
+const BooksPage = () => {
+  const { setSectionName } = useContext(UserContext);
+  
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await getAllBooks();
-      if (response.status === 200) {
-        console.log(response.data)
-      }
-      else {
-        console.log("Error", response);
-      }
-    }
-    fetchData()
+    setSectionName("Books");
   }, []);
 
-  return (
-    <div>Books</div>
-  )
+  return <Books />
 }
 
-export default Books
+export default BooksPage
