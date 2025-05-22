@@ -11,9 +11,9 @@ export const addAchievement = async(data)=>{
     }
 }
 
-export const getAllachievements = async()=>{
+export const getAllachievements = async(page = 1)=>{
     try {
-        const result = await Instance.get(`/${apiType}/get-achievements`);
+        const result = await Instance.get(`/${apiType}/get-achievements?page=${page}`);
         return result;
     } catch (error) {
         throw error;
@@ -22,16 +22,16 @@ export const getAllachievements = async()=>{
 
 export const getAchievementById = async(id)=> {
     try {
-        const result = await Instance.get(`/${apiType}/get-achievements/${id}`);
+        const result = await Instance.get(`/${apiType}/get-achievement/${id}`);
         return result;
     } catch (error) {
         throw error;
     }
 }
 
-export const editAchievement = async(id,data)=> {
+export const editAchievementAPI= async(id,data)=> {
     try{
-        const result = await Instance.put(`/${apiType}/edit-achievements/${id}`);
+        const result = await formInstance.put(`/${apiType}/edit-achievement/${id}`,data);
         return result;
     } catch (error) {
         throw error;
@@ -40,7 +40,7 @@ export const editAchievement = async(id,data)=> {
 
 export const deleteAchievement = async(id) => {
     try {
-        const result = await Instance.delete(`/${apiType}/delete-achievements/${id}`);
+        const result = await Instance.delete(`/${apiType}/delete-achievement/${id}`);
         return result;
     } catch(error){
         throw error;

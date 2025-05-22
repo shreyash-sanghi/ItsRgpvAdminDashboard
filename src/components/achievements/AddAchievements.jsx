@@ -1,18 +1,16 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import Button from "../ui/button";
 import InputField from "../ui/input";
 import TextArea from "../ui/textarea";
 import Select from "../ui/select";
-import { useContext } from "react";
 import { UserContext } from "../../App";
-import { addAchievement } from "../../api/allApi/achivement.js";
+import { addAchievement, editAchievementAPI } from "../../api/allApi/achivement.js"; // Assume you have updateAchievement API
 import FileUpload from "../ui/fileUpload.jsx";
 
+const AddAchievement = ({ editAchievement = false, AchievementData = {}, setIsEditing }) => {
 
-const AddAchievement = () => {
-
-  const { setSectionName } = useContext(UserContext); //  get section name
-
+  const { setSectionName } = useContext(UserContext);
+  const [loading,setLoading] = useState(false);
   const [achievement, setAchievement] = useState({
     firstName: "",
     lastName: "",
@@ -32,7 +30,34 @@ const AddAchievement = () => {
     socialMediaLinks: [""],
   });
 
-  const [tempLinks, setTempLinks] = useState(achievement.socialMediaLinks.join(" "));
+  const [tempLinks, setTempLinks] = useState("");
+
+
+  useEffect(() => {
+  setSectionName(editAchievement ? "Edit Achievement" : "Add Achievement");
+
+  if (editAchievement && AchievementData) {
+    const isoDate = AchievementData.achievementDate;
+    const formattedDate = isoDate ? isoDate.split("T")[0] : "";
+
+    setAchievement({
+      ...AchievementData,
+      achievementDate: formattedDate, // 👈 properly formatted date for the date input
+      fieldOfAchievement: AchievementData.fieldOfAchievement?.length
+        ? AchievementData.fieldOfAchievement
+        : [""],
+      socialMediaLinks: AchievementData.socialMediaLinks?.length
+        ? AchievementData.socialMediaLinks
+        : [""],
+    });
+
+    setTempLinks(
+      AchievementData.socialMediaLinks
+        ? AchievementData.socialMediaLinks.join(" ")
+        : ""
+    );
+  }
+}, [editAchievement, AchievementData, setSectionName]);
 
   const handleChange = (field, value) => {
     setAchievement((prev) => ({
@@ -40,7 +65,7 @@ const AddAchievement = () => {
       [field]: value,
     }));
   };
-
+  
   const handleArrayChange = (field, value, index) => {
     setAchievement((prev) => {
       const updatedArray = [...prev[field]];
@@ -64,71 +89,87 @@ const AddAchievement = () => {
     });
   };
 
-  // upload of image
   const handleFileUpload = (field, file) => {
     setAchievement((prev) => ({
       ...prev,
-      [field]: file,  // Directly assign the file instead of an array
+      [field]: file,
     }));
   };
-
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const formData = new FormData();
-  
-      // Append each field manually
-      formData.append("firstName", achievement.firstName);
-      formData.append("lastName", achievement.lastName);
-      formData.append("email", achievement.email);
-      formData.append("Year", achievement.Year);
-      formData.append("achievementDate", achievement.achievementDate);
-      formData.append("branch", achievement.branch);
-      formData.append("enrollmentNumber", achievement.enrollmentNumber);
-      formData.append("department", achievement.department);
-      formData.append("achievementTitle", achievement.achievementTitle);
-      formData.append("semester", achievement.semester);
-      formData.append("achievementDescription", achievement.achievementDescription);
-      formData.append("recognitionLevel", achievement.recognitionLevel);
-      formData.append("awards", achievement.awards);
-  
-      // Append the file manually (ensure it's a File object)
-      if (achievement.photos) {
-        formData.append("photos", achievement.photos); // Use the field name as 'photos'
-      }
-  
-      // Append array fields
-      achievement.fieldOfAchievement.forEach((field, index) => {
-        formData.append(`fieldOfAchievement[${index}]`, field);
-      });
-  
-      achievement.socialMediaLinks.forEach((link, index) => {
-        formData.append(`socialMediaLinks[${index}]`, link);
-      });
-  
-      // Log FormData to verify
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-  
-      const response = await addAchievement(formData);
-      console.log("Response from server:", response);
-      alert("Achievement added successfully!");
-    } catch (error) {
-      console.error("Error during submission: ", error);
-      alert(error.message);
-    }
-  };
+  e.preventDefault();
 
-  useEffect(() => {
-    setSectionName("Add Achievement");
-  },[]);
-  
+  try {
+    setLoading(true);
+    const formData = new FormData();
+
+    // Function to check deep equality (shallow for arrays/strings here)
+    const isEqual = (key, val1, val2) => {
+      if (Array.isArray(val1) && Array.isArray(val2)) {
+        return JSON.stringify(val1) === JSON.stringify(val2);
+      }
+      return val1 === val2;
+    };
+
+    if (editAchievement) {
+      for (const [key, value] of Object.entries(achievement)) {
+        const originalValue = AchievementData[key];
+
+        // Handle photos (file vs string)
+        if (key === "photos") {
+         if (key === "photos" && value) {
+          console.log(value)
+           formData.append("photos", value);
+        }
+        } else if (key === "fieldOfAchievement" || key === "socialMediaLinks") {
+          if (!isEqual(key, value, originalValue)) {
+            value.forEach((item, i) => formData.append(`${key}[${i}]`, item));
+          }
+        } else {
+          if (!isEqual(key, value, originalValue)) {
+            formData.append(key, value);
+          }
+        }
+      }
+for (let pair of formData.entries()) {
+  console.log(`${pair[0]}:`, pair[1]);
+}
+      await editAchievementAPI(AchievementData._id,formData);
+      alert("Achievement updated successfully!");
+   setIsEditing(false);
+    } else {
+      // New achievement: send everything
+      for (const [key, value] of Object.entries(achievement)) {
+        if (key === "fieldOfAchievement" || key === "socialMediaLinks") {
+          value.forEach((item, i) => formData.append(`${key}[${i}]`, item));
+        } else if (key === "photos" && value) {
+          formData.append("photos", value);
+        } else {
+          formData.append(key, value);
+        }
+      }
+
+      const response = await addAchievement(formData);
+      alert("Achievement added successfully!");
+    }
+
+  } catch (error) {
+    console.error("Error during submission:", error);
+    alert(error.message || "Something went wrong.");
+  }finally{
+    setLoading(false);
+  }
+};
+
   return (
     <div className="flex flex-col bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
-          Add Achievement
+        <h2 className="text-2xl flex justify-between font-semibold text-gray-800 dark:text-gray-100 mb-6">
+          <p>
+          {editAchievement ? "Edit Achievement" : "Add Achievement"}
+          </p>
+          {(editAchievement)&&(<>
+          <Button onClick={()=>setIsEditing(false)} label="<- Back"></Button>
+          </>)}
         </h2>
 
         {/* Inline Fields Section */}
@@ -196,10 +237,12 @@ const AddAchievement = () => {
             placeholder="Enter year"
             value={achievement.Year}
             onChange={(e) => handleChange("Year", e.target.value)}
-            required
           />
           <div>
-            <label htmlFor="achievementDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="achievementDate"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Achievement Date <span className="text-red-500">*</span>
             </label>
             <input
@@ -207,13 +250,16 @@ const AddAchievement = () => {
               id="achievementDate"
               value={achievement.achievementDate}
               onChange={(e) => handleChange("achievementDate", e.target.value)}
-              max={new Date().toISOString().split('T')[0]}
+              max={new Date().toISOString().split("T")[0]}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               required
             />
           </div>
           <div>
-            <label htmlFor="semester" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="semester"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Semester <span className="text-red-500">*</span>
             </label>
             <select
@@ -224,14 +270,11 @@ const AddAchievement = () => {
               required
             >
               <option value="">Select semester</option>
-              <option value="1">I</option>
-              <option value="2">II</option>
-              <option value="3">III</option>
-              <option value="4">IV</option>
-              <option value="5">V</option>
-              <option value="6">VI</option>
-              <option value="7">VII</option>
-              <option value="8">VIII</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                <option key={num} value={num}>
+                  {num}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -248,6 +291,7 @@ const AddAchievement = () => {
           id="recognitionLevel"
           label="Recognition Level"
           value={achievement.recognitionLevel}
+          placeholder="Select Recognition Level"
           onChange={(e) => handleChange("recognitionLevel", e.target.value)}
           options={["gold level", "silver level", "bronze level"]}
         />
@@ -258,18 +302,23 @@ const AddAchievement = () => {
           value={achievement.awards}
           onChange={(e) => handleChange("awards", e.target.value)}
         />
-        <label htmlFor="">
-          Achievment images
-       
-        <FileUpload
-                id="photos"
-                files={achievement.photos}
-                onChange={(files) => handleFileUpload("photos", files)}
-        />
-      </label>
+        <label>
+          Achievement Images
+          <FileUpload
+            required={editAchievement?false:true}
+            id="photos"
+            files={achievement.photos}
+            onChange={(files) => handleFileUpload("photos", files)}
+          />
+          
+        </label>
+
         {/* Fields of Achievement */}
         <div>
-          <label htmlFor="fieldOfAchievement" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="fieldOfAchievement"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Fields of Achievement
           </label>
           {achievement.fieldOfAchievement.map((field, index) => (
@@ -277,13 +326,18 @@ const AddAchievement = () => {
               <InputField
                 id={`fieldOfAchievement-${index}`}
                 value={field}
-                onChange={(e) => handleArrayChange("fieldOfAchievement", e.target.value, index)}
+                onChange={(e) =>
+                  handleArrayChange("fieldOfAchievement", e.target.value, index)
+                }
                 placeholder="Enter field"
               />
-              <Button label="Remove" onClick={() => handleRemoveField("fieldOfAchievement", index)} />
+              <Button
+                label="Remove"
+                onClick={() => handleRemoveField("fieldOfAchievement", index)}
+              />
             </div>
           ))}
-          <Button label="Add Field" onClick={() => handleAddField("fieldOfAchievement")} />
+          <Button type="button" label="Add Field" onClick={() => handleAddField("fieldOfAchievement")} />
         </div>
 
         {/* Social Media Links */}
@@ -296,14 +350,14 @@ const AddAchievement = () => {
           </label>
           <InputField
             id="socialMediaLinks"
-            value={tempLinks} // Use a temporary string state for user input
-            onChange={(e) => setTempLinks(e.target.value)} // Update the temp value on input
+            value={tempLinks}
+            onChange={(e) => setTempLinks(e.target.value)}
             onBlur={() =>
               handleChange(
                 "socialMediaLinks",
                 tempLinks
                   .split(" ")
-                  .filter((link) => link.trim() !== "") // Process input on blur
+                  .filter((link) => link.trim() !== "")
               )
             }
             placeholder="Enter links separated by spaces"
@@ -312,7 +366,7 @@ const AddAchievement = () => {
 
         {/* Submit Button */}
         <div className="text-center mt-6">
-          <Button label="Submit" />
+          <Button loading={loading} type="submit" label={editAchievement ? "Update" : "Submit"} />
         </div>
       </form>
     </div>
