@@ -30,18 +30,19 @@ export const getDepartmentById = async (id) => {
     }
 }
 
-export const editDepartment = async(id) => {
+export const editDepartmentAPI = async(id) => {
     try{
-        const result = await Instance.put(`/${apiType}/edit-department/${id}`)
+        const result = await formInstance.put(`/${apiType}/edit-department/${id}`)
         return result;
     } catch(error){
         throw error;
     }
 }
 
-export const deleteDepartment = async(data,id) => {
+export const deleteDepartment = async(id) => {
     try {
         const result = await Instance.delete(`/${apiType}/delete-department/${id}`);
+        return result;
     } catch(error){
         throw error;
     }

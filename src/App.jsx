@@ -1,4 +1,8 @@
 import React, { useEffect, useState, createContext } from 'react';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+
 import {
   Routes,
   Route,
@@ -45,7 +49,10 @@ function App() {
           </main>
         </div>
       </div>
+      
+      <ToastContainer />
     </UserContext.Provider>
+    
   );
 }
 export {UserContext}

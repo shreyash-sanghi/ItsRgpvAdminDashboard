@@ -1,10 +1,16 @@
-import React, { useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import Button from "../ui/button";
 import InputField from "../ui/input";
-import { addPlacement } from "../../api/allApi/placement";
+import { addPlacement, editPlacementAPI } from "../../api/allApi/placement";
 import FileUpload from "../ui/fileUpload";
+import Select from "../ui/select";
+import { showSuccessToast, showErrorToast } from "../ui/toast";
+import { UserContext } from "../../App";
 
-const AddPlacement = () => {
+const AddPlacement = ({ editPlacement = false, AllPlacementData = {}, setIsEditing }) => {
+  const { setSectionName } = useContext(UserContext);
+  const [loading, setLoading] = useState(false);
+
   const [placementData, setPlacementData] = useState({
     studentFirstName: "",
     studentLastName: "",
@@ -18,6 +24,17 @@ const AddPlacement = () => {
     semester: 0,
     salaryPackage: 0,
   });
+
+  useEffect(() => {
+    setSectionName(editPlacement ? "Edit Placement" : "Add Placement");
+
+    if (editPlacement && AllPlacementData) {
+      setPlacementData({
+        ...AllPlacementData,
+        profilePicture: null, // reset file input
+      });
+    }
+  }, [editPlacement, AllPlacementData, setSectionName]);
 
   const handleChange = (field, value) => {
     setPlacementData((prev) => ({
@@ -35,52 +52,62 @@ const AddPlacement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
+      setLoading(true);
       const formData = new FormData();
 
-      // Append fields to formData
-      formData.append("studentFirstName", placementData.studentFirstName);
-      formData.append("studentLastName", placementData.studentLastName);
-      formData.append("email", placementData.email);
-      formData.append("contactNumber", placementData.contactNumber);
-      formData.append("enrollmentNumber", placementData.enrollmentNumber);
-      formData.append("company", placementData.company);
-      formData.append("passoutYear", placementData.passoutYear);
-      formData.append("semester", placementData.semester);
-      formData.append("salaryPackage", placementData.salaryPackage);
-      formData.append("formType", "placement");
+      // Helper to check shallow equality
+      const isEqual = (key, val1, val2) => {
+        if (Array.isArray(val1) && Array.isArray(val2)) {
+          return JSON.stringify(val1) === JSON.stringify(val2);
+        }
+        return val1 === val2;
+      };
 
-      // Append skills as JSON string
-      formData.append("skills", JSON.stringify(placementData.skills));
-
-      // Append profile picture if exists
-      if (placementData.profilePicture) {
-        formData.append("profilePicture", placementData.profilePicture);
+      if (editPlacement) {
+        for (const [key, value] of Object.entries(placementData)) {
+          const originalValue = AllPlacementData[key];
+      
+          if (key === "profilePicture") {
+            if (value instanceof File) {
+              formData.append("profilePicture", value); // new file uploaded
+            }
+            // Do not send anything if no file was uploaded
+          } else if (!isEqual(key, value, originalValue)) {
+            formData.append(key, value);
+          }
+        }
+      
+        // Send the image URL if it was not replaced
+        if (!placementData.profilePicture && placementData.existingImage) {
+          formData.append("existingImage", placementData.existingImage);
+        }
+      
+        formData.append("formType", "placement");
+        await editPlacementAPI(AllPlacementData._id, formData);
+        showSuccessToast("Placement edited successfully");
+        setIsEditing(false);
       }
-
-      // API call
-      const response = await addPlacement(formData);
-      if (response.status === 200) {
-        console.log("Placement added successfully:", response);
-        // Reset form
-        setPlacementData({
-          studentFirstName: "",
-          studentLastName: "",
-          email: "",
-          contactNumber: "",
-          profilePicture: null,
-          skills: [],
-          enrollmentNumber: "",
-          company: "",
-          passoutYear: 0,
-          semester: 0,
-          package: 0,
-        });
-      } else {
-        console.error("Error adding placement:", response);
+      
+      else {
+        // New Placement
+        for (const [key, value] of Object.entries(placementData)) {
+          if (key === "profilePicture" && value) {
+            formData.append("profilePicture", value);
+          } else {
+            formData.append(key, value);
+          }
+        }
+        formData.append("formType", "placement");
+        await addPlacement(formData);
+        showSuccessToast("Placement added successfully");
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Error during submission:", error);
+      showErrorToast("Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -124,6 +151,7 @@ const AddPlacement = () => {
             <InputField
               id="contactNumber"
               label="Contact Number"
+              type="number"
               value={placementData.contactNumber}
               onChange={(e) => handleChange("contactNumber", e.target.value)}
               placeholder="Enter contact number"
@@ -182,29 +210,21 @@ const AddPlacement = () => {
               placeholder="Enter offered package"
               required
             />
-            <select
+            <Select
               id="semester"
+              label="Semester"
               value={placementData.semester}
               onChange={(e) => handleChange("semester", e.target.value)}
-              className="w-full px-3 py-2 border rounded-md dark:bg-gray-700"
+              options={[1, 2, 3, 4, 5, 6, 7, 8]}
+              placeholder="Select semester"
               required
-            >
-              <option value="">Select semester</option>
-                <option value="1">I</option>
-                <option value="2">II</option>
-                <option value="3">III</option>
-                <option value="4">IV</option>
-                <option value="5">V</option>
-                <option value="6">VI</option>
-                <option value="7">VII</option>
-                <option value="8">VIII</option>
-            </select>
+            />
           </div>
         </section>
 
         {/* Submit Button */}
         <div className="text-center mt-6">
-          <Button label="Submit" />
+          <Button type="submit" loading={loading} label="Submit" />
         </div>
       </form>
     </div>

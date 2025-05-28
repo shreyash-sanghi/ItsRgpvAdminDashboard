@@ -34,9 +34,9 @@ export const getBookById = async (id) => {
 }
 
 // done
-export const editBook = async (id,data) => {
+export const editBookAPI = async (id,data) => {
     try {
-        const result = Instance.put(`/${apiType}/edit-book/${id}`,data);
+        const result = formInstance.put(`/${apiType}/edit-book/${id}`,data);
         return result;
     } catch(error){
         throw error;

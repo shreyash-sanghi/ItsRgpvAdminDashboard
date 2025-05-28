@@ -13,7 +13,7 @@ export const addFest = async (data) => {
 
 export const getAllFests = async () => {
     try {
-        const result = await Instance.get(`/${apiType}/get-fests`);
+        const result = await Instance.get(`/${apiType}/get-fest`);
         return result;
     } catch (error) {
         throw error;
@@ -29,9 +29,9 @@ export const getFestById = async (id) => {
     }
 }
 
-export const editFest = async (id, data) => {
+export const editFestAPI = async (id, data) => {
     try {
-        const result = await Instance.put(`/${apiType}/edit-fest/${id}`, data);
+        const result = await formInstance.put(`/${apiType}/edit-fest/${id}`, data);
         return result;
     } catch (error) {
         throw error;

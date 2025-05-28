@@ -47,7 +47,7 @@ const routes = [
   },
   {
     path: '/department-image',
-    component: DepartmentImage,
+    component: Departments,
   },
   {
     path: '/department-info',

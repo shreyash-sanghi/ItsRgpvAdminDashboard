@@ -29,9 +29,9 @@ export const getHostelById = async (id) => {
     }
 }
 
-export const editHostel = async (id, data) => {
+export const editHostelAPI = async (id, data) => {
     try {
-        const result = await Instance.put(`/${apiType}/edit-hostel/${id}`, data);
+        const result = await formInstance.put(`/${apiType}/edit-hostel/${id}`, data);
         return result;
     } catch (error) {
         throw error;

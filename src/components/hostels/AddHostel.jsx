@@ -1,17 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Button from "../ui/button";
 import InputField from "../ui/input";
 import TextArea from "../ui/textarea";
-import { addHostel } from "../../api/allApi/hostel";
+import { addHostel, editHostelAPI } from "../../api/allApi/hostel";
 import FileUpload from "../ui/fileUpload";
+import { showErrorToast, showSuccessToast } from "../ui/toast";
+import { UserContext } from "../../App";
 
-const AddHostel = () => {
+const AddHostel = ({editHostel = false, HostelData = {}, setIsEditing}) => {
+  const { setSectionName } = useContext(UserContext);
+  const [loading, setLoading] = useState(false);
+
   const [hostel, setHostel] = useState({
     hostelName: "",
     hostelMessCharges: 0,
     hostelWardenName: "",
     totalStudentsInHostel: 0,
-    hostelPictures: [],     
+    hostelPictures: [],
     hostelEvents: [""],
     hostelFacilities: [""],
     hostelWardenContactNumber: [],
@@ -20,6 +25,27 @@ const AddHostel = () => {
     messRating: 0,
     hostelFeesPerSemester: 0,
   });
+
+  useEffect(() => {
+    setSectionName(editHostel ? "Edit Hostel" : "Add Hostel");
+  
+    if (editHostel && HostelData) {
+      setHostel({
+        hostelName: HostelData.hostelName || "",
+        hostelMessCharges: HostelData.hostelMessCharges || 0,
+        hostelWardenName: HostelData.hostelWardenName || "",
+        totalStudentsInHostel: HostelData.totalStudentsInHostel || 0,
+        hostelPictures: HostelData.hostelPictures || [],
+        hostelEvents: HostelData.hostelEvents?.length ? HostelData.hostelEvents : [""],
+        hostelFacilities: HostelData.hostelFacilities?.length ? HostelData.hostelFacilities : [""],
+        hostelWardenContactNumber: HostelData.hostelWardenContactNumber || [],
+        hostelRating: HostelData.hostelRating || 0,
+        roomsInHostel: HostelData.roomsInHostel || 0,
+        messRating: HostelData.messRating || 0,
+        hostelFeesPerSemester: HostelData.hostelFeesPerSemester || 0,
+      });
+    }
+  }, [editHostel, HostelData, setSectionName]);
 
 
   const handleChange = (field, value) => {
@@ -38,73 +64,83 @@ const AddHostel = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
-  
-    // Basic Fields
-    formData.append("hostelName", hostel.hostelName);
-    formData.append("hostelWardenName", hostel.hostelWardenName);
-    formData.append("hostelMessCharges", hostel.hostelMessCharges);
-    formData.append("hostelFeesPerSemester", hostel.hostelFeesPerSemester);
-    formData.append("totalStudentsInHostel", hostel.totalStudentsInHostel);
-    formData.append("roomsInHostel", hostel.roomsInHostel);
-    formData.append("hostelRating", hostel.hostelRating);
-    formData.append("messRating", hostel.messRating);
-  
-    // Handle Array Fields Properly
-    hostel.hostelEvents.forEach((event, index) => {
-      formData.append(`hostelEvents[${index}]`, event);
-    });
-  
-    hostel.hostelFacilities.forEach((facility, index) => {
-      formData.append(`hostelFacilities[${index}]`, facility);
-    });
-  
-    hostel.hostelWardenContactNumber.forEach((number, index) => {
-      formData.append(`hostelWardenContactNumber[${index}]`, number);
-    });
-  
-    // Handle File Uploads
-    hostel.hostelPictures.forEach((file) => {
-      if (file instanceof File) {
-        formData.append("hostelPictures", file); // Append each file
-      }
-    });
+    setLoading(true);
   
     try {
-      const response = await addHostel(formData);
-      console.log(response);
+      const formData = new FormData();
   
-      if (response.status === 201) {
-        alert("Hostel Added Successfully..");
-        // Corrected State Reset
-        setHostel({
-          hostelName: "",
-          hostelMessCharges: 0,
-          hostelWardenName: "",
-          totalStudentsInHostel: 0,
-          hostelPictures: [],
-          hostelEvents: [""],
-          hostelFacilities: [""],
-          hostelWardenContactNumber: [],
-          hostelRating: 0,
-          roomsInHostel: 0,
-          messRating: 0,
-          hostelFeesPerSemester: 0,
-        });
+      // Append primitive fields
+      formData.append("hostelName", hostel.hostelName);
+      formData.append("hostelWardenName", hostel.hostelWardenName);
+      formData.append("hostelMessCharges", hostel.hostelMessCharges);
+      formData.append("hostelFeesPerSemester", hostel.hostelFeesPerSemester);
+      formData.append("totalStudentsInHostel", hostel.totalStudentsInHostel);
+      formData.append("roomsInHostel", hostel.roomsInHostel);
+      formData.append("hostelRating", hostel.hostelRating);
+      formData.append("messRating", hostel.messRating);
+  
+      // Append array fields
+      hostel.hostelEvents.forEach((event, index) =>
+        formData.append(`hostelEvents[${index}]`, event)
+      );
+      hostel.hostelFacilities.forEach((facility, index) =>
+        formData.append(`hostelFacilities[${index}]`, facility)
+      );
+      hostel.hostelWardenContactNumber.forEach((number, index) =>
+        formData.append(`hostelWardenContactNumber[${index}]`, number)
+      );
+  
+      // Append images
+      hostel.hostelPictures.forEach((file) => {
+        if (file instanceof File) {
+          formData.append("hostelPictures", file);
+        }
+      });
+  
+      if (editHostel) {
+        await editHostelAPI(HostelData._id, formData);
+        showSuccessToast("Hostel updated successfully");
+        setIsEditing(false);
       } else {
-        alert("Error adding hostel.");
+        const response = await addHostel(formData);
+        if (response.status === 201) {
+          showSuccessToast("Hostel added successfully");
+          setHostel({
+            hostelName: "",
+            hostelMessCharges: 0,
+            hostelWardenName: "",
+            totalStudentsInHostel: 0,
+            hostelPictures: [],
+            hostelEvents: [""],
+            hostelFacilities: [""],
+            hostelWardenContactNumber: [],
+            hostelRating: 0,
+            roomsInHostel: 0,
+            messRating: 0,
+            hostelFeesPerSemester: 0,
+          });
+        } else {
+          showErrorToast("Error while adding hostel");
+        }
       }
     } catch (error) {
-      console.error("Error adding hostel:", error);
-      alert("An error occurred while adding hostel.");
+      console.error("Submission Error:", error);
+      showErrorToast("Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
-
+      
   return (
     <div className="flex flex-col bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
-          Hostel Information
+      <h2 className="text-2xl flex justify-between font-semibold text-gray-800 dark:text-gray-100 mb-6">
+          <p>
+            {editHostel ? "Edit Hostel" : "Add Hostel"}
+          </p>
+          {(editHostel) && (<>
+            <Button onClick={() => setIsEditing(false)} label="<- Back"></Button>
+          </>)}
         </h2>
 
         {/* Hostel Details Section */}
@@ -114,13 +150,9 @@ const AddHostel = () => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label
-                htmlFor="hostelName"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Hostel Name <span className="text-red-500">*</span>
-              </label>
+              
               <InputField
+                label="Hostel Name"
                 id="hostelName"
                 value={hostel.hostelName}
                 onChange={(e) => handleChange("hostelName", e.target.value)}
@@ -129,13 +161,8 @@ const AddHostel = () => {
               />
             </div>
             <div>
-              <label
-                htmlFor="hostelWardenName"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Warden Name <span className="text-red-500">*</span>
-              </label>
               <InputField
+                label="Warden Name"
                 id="hostelWardenName"
                 value={hostel.hostelWardenName}
                 onChange={(e) => handleChange("hostelWardenName", e.target.value)}
@@ -145,50 +172,40 @@ const AddHostel = () => {
             </div>
 
             <div>
-                            <label htmlFor="hostelWardenContactNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Contact Number (comma-separated)
-                            </label>
-                            <InputField
-                                id="hostelWardenContactNumber"
-                                value={hostel.hostelWardenContactNumber.join(", ")}
-                                onChange={(e) => {
-                                    const value = e.target.value.replace(/[^0-9,]/g, ""); // Allow only numbers and commas
-                                    handleChange("hostelWardenContactNumber", value.split(",").map((num) => num.trim()));
-                                }}
-                                placeholder="Enter phone numbers"
-                            />
-                        </div>
+              <InputField
+              label="Contact Number (comma-separated)"
+                id="hostelWardenContactNumber"
+                value={hostel.hostelWardenContactNumber.join(", ")}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9,]/g, ""); // Allow only numbers and commas
+                  handleChange("hostelWardenContactNumber", value.split(",").map((num) => num.trim()));
+                }}
+                placeholder="Enter phone numbers"
+              />
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div>
-              <label
-                htmlFor="hostelMessCharges"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Mess Charges (per month) <span className="text-red-500">*</span>
-              </label>
+              
               <InputField
+              label="Mess Charges (per month)"
                 id="hostelMessCharges"
                 type="number"
                 value={hostel.hostelMessCharges}
-                onChange={(e) => handleChange("hostelMessCharges", Number(e.target.value))}
+                onChange={(e) => handleChange("hostelMessCharges", e.target.value)}
                 placeholder="Enter mess charges"
                 required
               />
             </div>
             <div>
-              <label
-                htmlFor="hostelFeesPerSemester"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Fees (per semester) <span className="text-red-500">*</span>
-              </label>
+              
               <InputField
+              label="Fees (per semester)"
                 id="hostelFeesPerSemester"
                 type="number"
                 value={hostel.hostelFeesPerSemester}
                 onChange={(e) =>
-                  handleChange("hostelFeesPerSemester", Number(e.target.value))
+                  handleChange("hostelFeesPerSemester", e.target.value)
                 }
                 placeholder="Enter hostel fees"
                 required
@@ -197,31 +214,23 @@ const AddHostel = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div>
-              <label
-                htmlFor="totalStudentsInHostel"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Total Students <span className="text-red-500">*</span>
-              </label>
+             
               <InputField
+              label="Total Students"
                 id="totalStudentsInHostel"
                 type="number"
                 value={hostel.totalStudentsInHostel}
                 onChange={(e) =>
-                  handleChange("totalStudentsInHostel", Number(e.target.value))
+                  handleChange("totalStudentsInHostel", (e.target.value))
                 }
                 placeholder="Enter total students"
                 required
               />
             </div>
             <div>
-              <label
-                htmlFor="roomsInHostel"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Total Rooms <span className="text-red-500">*</span>
-              </label>
+             
               <InputField
+              label="Total Rooms"
                 id="roomsInHostel"
                 type="number"
                 value={hostel.roomsInHostel}
@@ -239,52 +248,38 @@ const AddHostel = () => {
             Media & Ratings
           </h3>
           <div>
-            <label
-              htmlFor="hostelPictures"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Hostel Pictures
-            </label>
             <FileUpload
-                        id="hostelPictures"
-                        multiple={true}  // Enable multiple uploads
-                        onChange={handleFileUpload}
-                        accept="image/*"
-                    />
+            label="Hostel Pictures"
+              id="hostelPictures"
+              multiple={true}  // Enable multiple uploads
+              onChange={handleFileUpload}
+              accept="image/*"
+            />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div>
-              <label
-                htmlFor="hostelRating"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Hostel Rating
-              </label>
               <InputField
+              label="Hostel Rating"
                 id="hostelRating"
                 type="number"
                 value={hostel.hostelRating}
-                onChange={(e) => handleChange("hostelRating", Number(e.target.value))}
+                onChange={(e) => handleChange("hostelRating", (e.target.value))}
                 placeholder="Enter rating (out of 5)"
-                step="0.1"
+                step="1"
                 min="0"
                 max="5"
               />
             </div>
             <div>
-              <label
-                htmlFor="messRating"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Mess Rating
-              </label>
+             
               <InputField
+              label="Mess Rating"
                 id="messRating"
                 type="number"
                 value={hostel.messRating}
-                onChange={(e) => handleChange("messRating", Number(e.target.value))}
+                onChange={(e) => handleChange("messRating", (e.target.value))}
                 placeholder="Enter mess rating (out of 5)"
-                step="0.1"
+                step="1"
                 min="0"
                 max="5"
               />
@@ -298,13 +293,8 @@ const AddHostel = () => {
             Facilities
           </h3>
           <div>
-            <label
-              htmlFor="hostelFacilities"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Hostel Facilities
-            </label>
             <InputField
+            label="Hostel Facilities"
               id="hostelFacilities"
               value={hostel.hostelFacilities.join(", ")}
               onChange={(e) =>
@@ -320,7 +310,7 @@ const AddHostel = () => {
 
         {/* Submit Button */}
         <div className="text-center mt-6">
-          <Button label="Submit" />
+          <Button loading={loading} type="submit"  label={editHostel ? "Update" : "Submit"} />
         </div>
       </form>
     </div>

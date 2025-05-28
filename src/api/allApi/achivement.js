@@ -32,7 +32,7 @@ export const getAchievementById = async(id)=> {
 export const editAchievementAPI= async(id,data)=> {
     try{
         const result = await formInstance.put(`/${apiType}/edit-achievement/${id}`,data);
-        return result;
+        return result;  
     } catch (error) {
         throw error;
     }
