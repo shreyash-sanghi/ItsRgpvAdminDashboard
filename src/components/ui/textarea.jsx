@@ -8,7 +8,7 @@ const TextArea = ({ id, value, onChange, placeholder, rows, required,label }) =>
           htmlFor={id}
           className="text-gray-700 dark:text-gray-200 font-medium"
         >
-          {label}
+          {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
     <textarea

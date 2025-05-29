@@ -1,109 +1,193 @@
 import React, { useState, useEffect } from "react";
-import { getAllStartups } from "../../api/api";
+import { FaEdit, FaEye } from 'react-icons/fa';
+import { MdDelete } from "react-icons/md";
+import Popup from '../ui/popup';
+import { DeleteConfirm } from '../ui/deleteConfirm';
+import ScreenLoader from '../ui/screenLoader';
+import { showErrorToast, showSuccessToast } from '../ui/toast';
+import { deleteStartup, getAllStartup } from "../../api/allApi/startup";
+import AddStartup from "./AddStartup";
 
-const Startups = () => {
+const Startup = () => {
   const [startups, setStartups] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [selectedStartup, setSelectedStartup] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const fetchData = async (currentPage = 1) => {
+    setLoading(true);
+    try {
+      const response = await getAllStartup(currentPage);
+      const rawData = response?.data;
+      const newStartups = Array.isArray(rawData?.data)
+        ? rawData.data
+        : Array.isArray(rawData)
+        ? rawData
+        : [];
+
+      if (newStartups.length < 9) {
+        setHasMore(false);
+      }
+
+      if (currentPage === 1) {
+        setStartups(newStartups);
+      } else {
+        setStartups((prev) => [...prev, ...newStartups]);
+      }
+
+      setPage(currentPage);
+    } catch (error) {
+      console.error("ERROR FETCHING STARTUPS:", error);
+      showErrorToast("Failed to load startups.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
+    fetchData(1);
+  }, [isEditing]);
+
+  const handleDelete = async (id) => {
+    const result = await DeleteConfirm('Delete Startup', 'Are you sure you want to delete this?');
+
+    if (result) {
+      setLoading(true);
       try {
-        const response = await getAllStartups();
-        if (response.status === 200) {
-          // Ensure we're setting an array, even if the response data is null or undefined
-          setStartups(Array.isArray(response.data) ? response.data : []);
-        } else {
-          setError("Failed to fetch startups");
-          setStartups([]); // Set empty array on error
-        }
-      } catch (err) {
-        setError("Error fetching startups: " + err.message);
-        setStartups([]); // Set empty array on error
+        await deleteStartup(id);
+        showSuccessToast("Deleted successfully");
+        setStartups((prev) => prev.filter((item) => item._id !== id));
+      } catch (error) {
+        showErrorToast("Failed to delete startup.");
       } finally {
         setLoading(false);
       }
-    };
+    }
+  };
 
-    fetchData();
-  }, []);
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    setSelectedStartup(null);
+  };
 
-  if (loading) {
-    return <div className="text-center py-8">Loading startups...</div>;
+  if (isEditing) {
+    return (
+      <AddStartup
+        setIsEditing={setIsEditing}
+        editStartup={isEditing}
+        StartupData={selectedStartup}
+      />
+    );
   }
 
-  if (error) {
-    return <div className="text-center text-red-500 py-8">{error}</div>;
-  }
-
-  if (!startups || startups.length === 0) {
-    return <div className="text-center py-8">No startups found</div>;
+  if (loading && startups.length === 0) {
+    return <ScreenLoader />;
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-      {startups.map((startup) => (
-        <div
-          key={startup._id}
-          className="bg-white rounded-lg shadow-md overflow-hidden"
-        >
-          {startup.startupLogo && (
-            <img
-              src={startup.startupLogo}
-              alt={startup.startupName}
-              className="w-full h-48 object-cover"
-            />
-          )}
-          <div className="p-4">
-            <h3 className="text-xl font-semibold mb-2">{startup.startupName}</h3>
-            <p className="text-gray-600 mb-2">
-              <span className="font-medium">Founder:</span> {startup.founderName}
-            </p>
-            <p className="text-gray-600 mb-2">
-              <span className="font-medium">Founded:</span> {startup.foundedYear}
-            </p>
-            <p className="text-gray-600 mb-2">
-              <span className="font-medium">Industry:</span> {startup.industry}
-            </p>
-            <p className="text-gray-600 mb-2">
-              <span className="font-medium">Location:</span> {startup.location}
-            </p>
-            <p className="text-gray-600 mb-2">
-              <span className="font-medium">Funding:</span> {startup.funding}
-            </p>
-            <p className="text-gray-600 mb-2">
-              <span className="font-medium">Employees:</span> {startup.employees}
-            </p>
-            <p className="text-gray-600 mb-2">
-              <span className="font-medium">Website:</span>{" "}
-              <a
-                href={startup.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
+    <div className="p-4">
+      {startups.length === 0 && !loading && (
+        <p className="text-center text-gray-500">No startups found.</p>
+      )}
+
+      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {startups.map((startup) => (
+          <div
+            key={startup._id}
+            className="bg-white dark:bg-gray-800 dark:text-white shadow-lg rounded-2xl p-4 relative hover:shadow-xl transition-shadow duration-300"
+          >
+            <div className="absolute top-4 right-4 flex space-x-2 text-gray-500">
+              <button className="hover:text-red-600" onClick={() => handleDelete(startup._id)}>
+                <MdDelete size={20} className="text-red-500" />
+              </button>
+              <button
+                className="hover:text-blue-600"
+                onClick={() => {
+                  setSelectedStartup(startup);
+                  setShowPopup(true);
+                }}
               >
-                {startup.website}
-              </a>
-            </p>
-            <p className="text-gray-600 mb-2">
-              <span className="font-medium">Description:</span>{" "}
-              {startup.description}
-            </p>
-            {startup.achievements && Array.isArray(startup.achievements) && (
-              <div className="mt-2">
-                <h4 className="font-medium mb-1">Achievements:</h4>
-                <ul className="list-disc list-inside text-gray-600">
-                  {startup.achievements.map((achievement, index) => (
-                    <li key={index}>{achievement}</li>
-                  ))}
-                </ul>
-              </div>
+                <FaEye size={18} />
+              </button>
+              <button
+                className="hover:text-blue-600"
+                onClick={() => {
+                  setSelectedStartup(startup);
+                  setIsEditing(true);
+                }}
+              >
+                <FaEdit size={18} />
+              </button>
+            </div>
+
+            {/* Logo */}
+            {startup.startupLogo && (
+              <img
+                src={startup.startupLogo}
+                alt={`${startup.startupName} Logo`}
+                className="h-28 w-full object-contain mb-4"
+              />
             )}
+
+            <div className="text-center">
+              <h2 className="text-xl font-bold">{startup.startupName}</h2>
+              <h3 className="text-md font-semibold text-gray-600 dark:text-gray-300">{startup.slogan}</h3>
+              <p className="text-gray-500 dark:text-gray-400 mt-2">{startup.description}</p>
+              <p><strong>Founder:</strong> {startup.founder}</p>
+              <p><strong>Startup Category:</strong> {startup.startupCategory}</p>
+              <p><strong>Email:</strong> {startup.contactEmail}</p>
+              <p><strong>Phone:</strong> {startup.contactPhone}</p>
+              <p><strong>Social Links:</strong> {startup.socialLinks}</p>
+              <p><strong>Date of Establishment:</strong>  {new Date(startup.dateOfEstablishment).toLocaleDateString()}</p>
+              <p><strong>Location:</strong> {startup.offlineLocation}</p>
+            </div> 
           </div>
+        ))}
+      </div>
+
+      {hasMore && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => fetchData(page + 1)}
+            disabled={loading}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            {loading ? 'Loading...' : 'Load More'}
+          </button>
         </div>
-      ))}
+      )}
+
+      <Popup title="View Startup" isOpen={showPopup} onClose={handleClosePopup}>
+        {selectedStartup && (
+          <div className="space-y-2 text-sm text-left">
+            <div className="flex justify-center">
+              {selectedStartup.startupLogo && (
+                <img
+                  src={selectedStartup.startupLogo}
+                  alt={`${selectedStartup.startupName} Logo`}
+                  className="h-28 w-28 object-contain rounded-full"
+                />
+              )}
+            </div>
+            <p><strong>Startup Name:</strong> {selectedStartup.startupName}</p>
+            <p><strong>Founder:</strong> {selectedStartup.founder}</p>
+              <p><strong>Startup Slogan:</strong> {selectedStartup.slogan}</p>
+              <p><strong>Startup Description:</strong> {selectedStartup.description}</p>
+              <p><strong>Startup Category:</strong> {selectedStartup.startupCategory}</p>
+              <p><strong>Email:</strong> {selectedStartup.contactEmail}</p>
+              <p><strong>Phone:</strong> {selectedStartup.contactPhone}</p>
+              <p><strong>Social Links:</strong> {selectedStartup.socialLinks}</p>
+              <p><strong>Date of Establishment:</strong>  {new Date(selectedStartup.dateOfEstablishment).toLocaleDateString()}</p>
+              <p><strong>Location:</strong> {selectedStartup.offlineLocation}</p>
+
+          </div>
+        )}
+      </Popup>
     </div>
   );
 };
 
-export default Startups; 
+export default Startup;

@@ -1,19 +1,53 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Button from "../ui/button";
 import InputField from "../ui/input";
+import Select from "../ui/select";
 import TextArea from "../ui/textarea";
-import { addScholarship } from "../../api/allApi/scholarship";
+import { addScholarship, editScholarshipAPI } from "../../api/allApi/scholarship"; // Make sure editScholarshipAPI exists
+import { showSuccessToast, showErrorToast } from "../ui/toast";
+import { UserContext } from "../../App"; // Adjust path as needed
 
-const AddScholarship = () => {
+const AddScholarship = ({ editScholarship = false, ScholarshipData = {}, setIsEditing }) => {
+  const { setSectionName } = useContext(UserContext);
+  const [loading, setLoading] = useState(false);
+
   const [scholarship, setScholarship] = useState({
     organisationName: "",
     organisationType: "",
     applyUrl: "",
     amount: 0,
-    eligibilityCriteria: [],
-    documentRequired: [],
-    contactInfo: [],
+    eligibilityCriteria: [""],
+    documentRequired: [""],
+    contactInfo: [""],
   });
+
+  // Store original data to compare changes (for edit mode)
+  const [originalScholarship, setOriginalScholarship] = useState(null);
+
+  useEffect(() => {
+    setSectionName(editScholarship ? "Edit Scholarship" : "Add Scholarship");
+
+    if (editScholarship && ScholarshipData) {
+      const data = {
+        organisationName: ScholarshipData.organisationName || "",
+        organisationType: ScholarshipData.organisationType || "",
+        applyUrl: ScholarshipData.applyUrl || "",
+        amount: ScholarshipData.amount || 0,
+        eligibilityCriteria: ScholarshipData.eligibilityCriteria?.length
+          ? ScholarshipData.eligibilityCriteria
+          : [""],
+        documentRequired: ScholarshipData.documentRequired?.length
+          ? ScholarshipData.documentRequired
+          : [""],
+        contactInfo: ScholarshipData.contactInfo?.length
+          ? ScholarshipData.contactInfo
+          : [""],
+      };
+
+      setScholarship(data);
+      setOriginalScholarship(data);
+    }
+  }, [editScholarship, ScholarshipData, setSectionName]);
 
   const handleChange = (field, value) => {
     setScholarship((prev) => ({
@@ -23,6 +57,7 @@ const AddScholarship = () => {
   };
 
   const handleArrayChange = (field, value) => {
+    // Split by comma and trim spaces for array fields
     setScholarship((prev) => ({
       ...prev,
       [field]: value.split(",").map((item) => item.trim()),
@@ -31,32 +66,73 @@ const AddScholarship = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try{
-      console.log("ScholarShip Data : ", scholarship);
-      const response = await addScholarship(scholarship);
-      alert("success");
-    }catch(error){
-      console.log(error);
-      alert(error);
+    try {
+      setLoading(true);
+
+      let payload = scholarship;
+
+      if (editScholarship && originalScholarship) {
+        // Compare current scholarship with original and send only changed fields
+        payload = {};
+        for (const key in scholarship) {
+          if (Array.isArray(scholarship[key])) {
+            if (
+              JSON.stringify(scholarship[key]) !== JSON.stringify(originalScholarship[key])
+            ) {
+              payload[key] = scholarship[key];
+            }
+          } else {
+            if (scholarship[key] !== originalScholarship[key]) {
+              payload[key] = scholarship[key];
+            }
+          }
+        }
+
+        if (Object.keys(payload).length === 0) {
+          showErrorToast("No changes detected.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      console.log("Submitting scholarship:", payload);
+
+      if (editScholarship) {
+        // Call update API with the scholarship id and changed fields
+        await editScholarshipAPI(ScholarshipData._id, payload);
+        showSuccessToast("Scholarship updated successfully");
+        if (setIsEditing) setIsEditing(false);
+      } else {
+        // Add new scholarship
+        await addScholarship(payload);
+        showSuccessToast("Scholarship added successfully");
+        if (setIsEditing) setIsEditing(false);
+      }
+    } catch (error) {
+      console.error("Error submitting scholarship:", error);
+      showErrorToast(
+        editScholarship ? "Failed to update scholarship" : "Failed to add scholarship"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  
   return (
     <div className="flex flex-col bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
         <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
-          Add Scholarship
+        <p>
+          {editScholarship ? "Edit Scholarship" : "Add Scholarship"}
+          </p>
+          {(editScholarship) && (<>
+            <Button onClick={() => setIsEditing(false)} label="<- Back"></Button>
+          </>)}
         </h2>
 
         <div>
-          <label
-            htmlFor="organisationName"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Organization Name <span className="text-red-500">*</span>
-          </label>
           <InputField
+            label="Organization Name"
             id="organisationName"
             value={scholarship.organisationName}
             onChange={(e) => handleChange("organisationName", e.target.value)}
@@ -66,33 +142,20 @@ const AddScholarship = () => {
         </div>
 
         <div>
-          <label
-            htmlFor="organisationType"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Organization Type <span className="text-red-500">*</span>
-          </label>
-          <select
+          <Select
             id="organisationType"
+            label="Organization Type"
             value={scholarship.organisationType}
             onChange={(e) => handleChange("organisationType", e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            options={["Government", "Private"]}
+            placeholder="Select Organization Type"
             required
-          >
-            <option value="">Select organization type</option>
-            <option value="Government">Government</option>
-            <option value="Private">Private</option>
-          </select>
+          />
         </div>
 
         <div>
-          <label
-            htmlFor="applyUrl"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Application URL <span className="text-red-500">*</span>
-          </label>
           <InputField
+            label="Application URL"
             id="applyUrl"
             value={scholarship.applyUrl}
             onChange={(e) => handleChange("applyUrl", e.target.value)}
@@ -102,13 +165,8 @@ const AddScholarship = () => {
         </div>
 
         <div>
-          <label
-            htmlFor="amount"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Scholarship Amount <span className="text-red-500">*</span>
-          </label>
           <InputField
+            label="Scholarship Amount"
             id="amount"
             type="number"
             value={scholarship.amount}
@@ -119,13 +177,8 @@ const AddScholarship = () => {
         </div>
 
         <div>
-          <label
-            htmlFor="eligibilityCriteria"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Eligibility Criteria <span className="text-red-500">*</span>
-          </label>
           <TextArea
+            label="Eligibility Criteria"
             id="eligibilityCriteria"
             value={scholarship.eligibilityCriteria.join(", ")}
             onChange={(e) => handleArrayChange("eligibilityCriteria", e.target.value)}
@@ -136,13 +189,8 @@ const AddScholarship = () => {
         </div>
 
         <div>
-          <label
-            htmlFor="documentRequired"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Documents Required <span className="text-red-500">*</span>
-          </label>
           <TextArea
+            label="Documents Required"
             id="documentRequired"
             value={scholarship.documentRequired.join(", ")}
             onChange={(e) => handleArrayChange("documentRequired", e.target.value)}
@@ -153,13 +201,8 @@ const AddScholarship = () => {
         </div>
 
         <div>
-          <label
-            htmlFor="contactInfo"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Contact Information <span className="text-red-500">*</span>
-          </label>
           <TextArea
+            label="Contact Information"
             id="contactInfo"
             value={scholarship.contactInfo.join(", ")}
             onChange={(e) => handleArrayChange("contactInfo", e.target.value)}
@@ -170,11 +213,11 @@ const AddScholarship = () => {
         </div>
 
         <div className="text-center mt-6">
-          <Button label="Submit" />
+          <Button loading={loading} type="submit" label={editScholarship ? "Update" : "Submit"} />
         </div>
       </form>
     </div>
   );
 };
 
-export default AddScholarship; 
+export default AddScholarship;

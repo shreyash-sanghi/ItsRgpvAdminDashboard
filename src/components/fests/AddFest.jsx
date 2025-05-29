@@ -1,24 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import Button from "../ui/button";
 import InputField from "../ui/input";
 import TextArea from "../ui/textarea";
-import { addFest } from "../../api/allApi/fests";
+import { addFest, editFestAPI } from "../../api/allApi/fests";
 import FileUpload from "../ui/fileUpload";
+import { showErrorToast, showSuccessToast } from "../ui/toast";
+import { UserContext } from "../../App";
 
-const AddFest = () => {
+const AddFest = ({ editFest = false, FestData = {}, setIsEditing }) => {
+  const { setSectionName } = useContext(UserContext);
+  const [loading, setLoading] = useState(false);
   const [fest, setFest] = useState({
     festName: "",
     organisedBy: "",
     sponsor: "",
     description: "",
     dateOfEvent: "",
-    bannerPicture: "",
+    bannerPicture: null,
     festImages: [],
     theme: "",
     chiefGuest: "",
     festVideo: null,
     listOfActivities: [],
   });
+
+  useEffect(() => {
+    setSectionName(editFest ? "Edit Fest" : "Add Fest");
+
+    if (editFest && FestData) {
+
+      const isoDate = FestData.dateOfEvent;
+      const formattedDate = isoDate ? isoDate.split("T")[0] : "";
+
+      setFest({
+        ...FestData,
+        dateOfEvent : formattedDate,
+        listOfActivities: FestData.listOfActivities?.length
+          ? FestData.listOfActivities
+          : [""],
+      });
+    }
+  }, [editFest, FestData, setSectionName]);
 
   const handleChange = (field, value) => {
     setFest((prev) => ({
@@ -27,84 +49,109 @@ const AddFest = () => {
     }));
   };
 
-
   const handleBannerUpload = (field, file) => {
-  setFest((prev) => ({
-    ...prev,
-    [field]: file, // Storing the entire file object
-  }));
-};
+    setFest((prev) => ({
+      ...prev,
+      [field]: file,
+    }));
+  };
 
   const handlefestImagesUpload = (files) => {
     setFest((prev) => ({
       ...prev,
-      festImages: [...prev.festImages, ...Array.from(files)], // Append new files
+      festImages: [...prev.festImages, ...Array.from(files)],
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
       const formData = new FormData();
 
-      // Manually append fields
-      formData.append("festName", fest.festName);
-      formData.append("organisedBy", fest.organisedBy);
-      formData.append("sponsor", fest.sponsor);
-      formData.append("description", fest.description);
-      formData.append("dateOfEvent", fest.dateOfEvent);
-      formData.append("theme", fest.theme);
-      formData.append("chiefGuest", fest.chiefGuest);
-      formData.append("festVideo", fest.festVideo || "");
+      const isEqual = (key, val1, val2) => {
+        if (Array.isArray(val1) && Array.isArray(val2)) {
+          return JSON.stringify(val1) === JSON.stringify(val2);
+        }
+        return val1 === val2;
+      };
 
-      // Manually append banner picture if exists
-      if (fest.bannerPicture) {
-        formData.append("bannerPicture", fest.bannerPicture);
-      }
+      if (editFest) {
+        for (const [key, value] of Object.entries(fest)) {
+          const originalValue = FestData[key];
 
+          if (key === "bannerPicture" && value && value !== originalValue) {
+            formData.append("bannerPicture", value);
+          } else if (key === "festImages" && value.length) {
+            if (!isEqual(key, value, originalValue)) {
+              value.forEach((img) => formData.append("festImages", img));
+            }
+          } else if (key === "listOfActivities") {
+            if (!isEqual(key, value, originalValue)) {
+              formData.append("listOfActivities", JSON.stringify(value));
+            }
+          } else {
+            if (!isEqual(key, value, originalValue)) {
+              formData.append(key, value);
+            }
+          }
+          formData.append("formType","fest");
+        }
 
-
-      // Manually aad multiple images
-      if (fest.festImages.length > 0) {
-        fest.festImages.forEach((image, index) => {
-          formData.append("festImages", image);
-        });
-      }
-
-      // Manually append list of activities as a JSON string
-      if (fest.listOfActivities.length > 0) {
-        formData.append("listOfActivities", JSON.stringify(fest.listOfActivities));
-      }
-
-      const response = await addFest(formData);
-      if (response.status === 200) {
-        console.log("Fest added successfully:", response);
-        // Reset form
-        setFest({
-          festName: "",
-          organisedBy: "",
-          sponsor: "",
-          description: "",
-          dateOfEvent: "",
-          bannerPicture: null,
-          festImages: [],
-          theme: "",
-          chiefGuest: "",
-          festVideo: null,
-          listOfActivities: [],
-        });
+        await editFestAPI(FestData._id, formData);
+        showSuccessToast("Fest edited successfully");
+        setIsEditing(false);
       } else {
-        console.error("Error adding fest:", response);
+        // Add new fest
+        for (const [key, value] of Object.entries(fest)) {
+          if (key === "festImages" && value.length) {
+            value.forEach((img) => formData.append("festImages", img));
+          } else if (key === "listOfActivities") {
+            formData.append("listOfActivities", JSON.stringify(value));
+          } else if (key === "bannerPicture" && value) {
+            formData.append("bannerPicture", value);
+          } else if (value !== null && value !== "") {
+            formData.append(key, value);
+          }
+          formData.append("formType","fest")
+        }
+
+        const response = await addFest(formData);
+        if (response.status === 201) {
+          showSuccessToast("Fest Info added successfully...");
+          setFest({
+            festName: "",
+            organisedBy: "",
+            sponsor: "",
+            description: "",
+            dateOfEvent: "",
+            bannerPicture: null,
+            festImages: [],
+            theme: "",
+            chiefGuest: "",
+            festVideo: null,
+            listOfActivities: [],
+          });
+        } else {
+          showErrorToast("Error while adding Fest..");
+        }
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Error during submission:", error);
+      showErrorToast("Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
     <div className="flex flex-col bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
-          Add Fest
+        <h2 className="text-2xl flex justify-between font-semibold text-gray-800 dark:text-gray-100 mb-6">
+          <p>{editFest ? "Add Fest" : "Add Fest"}</p>
+          {editFest && (
+            <Button onClick={() => setIsEditing(false)} label="<- Back" />
+          )}
         </h2>
 
         {/* Fest Details Section */}
@@ -113,76 +160,45 @@ const AddFest = () => {
             Fest Details
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label
-                htmlFor="festName"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Fest Name <span className="text-red-500">*</span>
-              </label>
-              <InputField
-                id="festName"
-                value={fest.festName}
-                onChange={(e) => handleChange("festName", e.target.value)}
-                placeholder="Enter fest name"
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="organisedBy"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Organised By <span className="text-red-500">*</span>
-              </label>
-              <InputField
-                id="organisedBy"
-                value={fest.organisedBy}
-                onChange={(e) => handleChange("organisedBy", e.target.value)}
-                placeholder="Enter organiser name"
-                required
-              />
-            </div>
+            <InputField
+              label="Fest Name"
+              id="festName"
+              value={fest.festName}
+              onChange={(e) => handleChange("festName", e.target.value)}
+              placeholder="Enter fest name"
+              required
+            />
+            <InputField
+              label="Organised By"
+              id="organisedBy"
+              value={fest.organisedBy}
+              onChange={(e) => handleChange("organisedBy", e.target.value)}
+              placeholder="Enter organiser name"
+              required
+            />
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <div>
-              <label
-                htmlFor="sponsor"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Sponsor
-              </label>
-              <InputField
-                id="sponsor"
-                value={fest.sponsor}
-                onChange={(e) => handleChange("sponsor", e.target.value)}
-                placeholder="Enter sponsor name"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="theme"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Theme <span className="text-red-500">*</span>
-              </label>
-              <InputField
-                id="theme"
-                value={fest.theme}
-                onChange={(e) => handleChange("theme", e.target.value)}
-                placeholder="Enter fest theme"
-                required
-              />
-            </div>
+            <InputField
+              label="Sponsor"
+              id="sponsor"
+              value={fest.sponsor}
+              onChange={(e) => handleChange("sponsor", e.target.value)}
+              placeholder="Enter sponsor name"
+            />
+            <InputField
+              label="Theme"
+              id="theme"
+              value={fest.theme}
+              onChange={(e) => handleChange("theme", e.target.value)}
+              placeholder="Enter fest theme"
+              required
+            />
           </div>
+
           <div className="mt-4">
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Description <span className="text-red-500">*</span>
-            </label>
             <TextArea
+              label="Description"
               id="description"
               value={fest.description}
               onChange={(e) => handleChange("description", e.target.value)}
@@ -199,52 +215,35 @@ const AddFest = () => {
             Event Details
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label
-                htmlFor="dateOfEvent"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Date of Event <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                id="dateOfEvent"
-                value={fest.dateOfEvent}
-                onChange={(e) => handleChange("dateOfEvent", e.target.value)}
-                max={new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="chiefGuest"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Chief Guest
-              </label>
-              <InputField
-                id="chiefGuest"
-                value={fest.chiefGuest}
-                onChange={(e) => handleChange("chiefGuest", e.target.value)}
-                placeholder="Enter chief guest name"
-              />
-            </div>
+            <InputField
+              id="dateOfEvent"
+              label="Date of Event"
+              type="date"
+              placeholder="Enter Date"
+              value={fest.dateOfEvent}
+              onChange={(e) => handleChange("dateOfEvent", e.target.value)}
+              required
+            />
+            <InputField
+              label="Chief Guest"
+              id="chiefGuest"
+              value={fest.chiefGuest}
+              onChange={(e) => handleChange("chiefGuest", e.target.value)}
+              placeholder="Enter chief guest name"
+            />
           </div>
           <div className="mt-4">
-            <label
-              htmlFor="listOfActivities"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              List of Activities
-            </label>
             <InputField
+              label="List Of Activities"
               id="listOfActivities"
               value={fest.listOfActivities.join(", ")}
               onChange={(e) =>
                 handleChange(
                   "listOfActivities",
-                  e.target.value.split(",").map((activity) => activity.trim()).filter(Boolean)
+                  e.target.value
+                    .split(",")
+                    .map((activity) => activity.trim())
+                    .filter(Boolean)
                 )
               }
               placeholder="Enter activities (comma-separated)"
@@ -257,59 +256,44 @@ const AddFest = () => {
           <h3 className="text-xl font-medium text-gray-800 dark:text-gray-100 mb-4">
             Media
           </h3>
-          <div>
-            <label
-              htmlFor="bannerPicture"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Banner Picture
-            </label>
-            <FileUpload
-              id="bannerPicture"
-              files={fest.bannerPicture} // Pass single file object
-              onChange={(file) => handleBannerUpload("bannerPicture", file)}
-              accept="image/*"
-
-            />
-          </div>
+          <FileUpload
+            label="Banner Picture"
+            id="bannerPicture"
+            files={fest.bannerPicture}
+            onChange={(file) => handleBannerUpload("bannerPicture", file)}
+            accept="image/*"
+          />
           <div className="mt-4">
-            <label
-              htmlFor="festImages"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Fest Images
-            </label>
             <FileUpload
               id="eventImages"
+              label="Fest Images"
               multiple={true}
               onChange={(files) => handlefestImagesUpload(files)}
               accept="image/*"
             />
           </div>
           <div className="mt-4">
-            <label
-              htmlFor="festVideo"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Fest Video
-            </label>
-            <input
-              type="file"
+            <InputField
+              label="Fest Video"
               id="festVideo"
-              accept="video/*"
-              onChange={(e) => handleFileChange("festVideo", e.target.files[0])}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              value={fest.festVideo}
+              onChange={(e) => handleChange("festVideo", e.target.value)}
+              placeholder="Enter fest-video link"
             />
           </div>
         </section>
 
         {/* Submit Button */}
-        <div className="text-center mt-6">
-          <Button label="Submit" />
+        <div>
+          <Button
+            type="submit"
+            label={editFest ? "Update" :"Add Fest"}
+            loading={loading}
+          />
         </div>
       </form>
     </div>
   );
 };
 
-export default AddFest; 
+export default AddFest;

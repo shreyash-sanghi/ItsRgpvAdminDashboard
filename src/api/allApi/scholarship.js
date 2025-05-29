@@ -29,7 +29,7 @@ export const getScholarshipById = async (id) => {
     }
 }
 
-export const editScholarship = async (id,data) => {
+export const editScholarshipAPI = async (id,data) => {
     try {
         const result = await Instance.put(`/${apiType}/edit-scholarship/${id}`,data);
         return result;

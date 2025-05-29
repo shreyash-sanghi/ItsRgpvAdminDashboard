@@ -1,53 +1,81 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Button from "../ui/button";
 import InputField from "../ui/input";
 import TextArea from "../ui/textarea";
 import SelectField from "../ui/select";
-import { addClub } from "../../api/allApi/club";
+import { addClub, editClubAPI } from "../../api/allApi/club";
+import { showSuccessToast, showErrorToast } from "../ui/toast";
+import FileUpload from "../ui/fileUpload";
+import { UserContext } from "../../App";
 
-const AddClub = () => {
-        const [club, setClub] = useState({
-            clubName: "",
-            founderName: "",
-            description: "",
-            typeOfClub: "",
-            dateOfEstablishment: "",
-            contactEmail: "",
-            contactPhone: [],
-            socialLinks: [""],
-            logoImg: null,
-            coverImg: null,
-        });
-    
-        const handleChange = (field, value) => {
-            setClub((prev) => ({
-                ...prev,
-                [field]: value,
-            }));
-        };
-    
-        const handleFileChange = (field, file) => {
-            setClub((prev) => ({
-                ...prev,
-                [field]: file,
-            }));
-            console.log(file);
-        };
-    
-        const handleSubmit = async (e) => {
-            e.preventDefault();
-    
+
+const AddClub = ({ editClub = false, clubData = {}, setIsEditing }) => {
+
+    const { setSectionName } = useContext(UserContext);
+    const [loading, setLoading] = useState(false);
+    const [club, setClub] = useState({
+        clubName: "",
+        founderName: "",
+        description: "",
+        typeOfClub: "",
+        dateOfEstablishment: "",
+        contactEmail: "",
+        contactPhone: [],
+        socialLinks: [""],
+        logoImg: null,
+        coverImg: null,
+    });
+
+
+    useEffect(() => {
+
+        setSectionName(editClub ? "Edit Club" : "Add Club");
+
+        if (editClub && clubData) {
+
+            setClub({
+                ...clubData,
+                contactPhone: clubData.contactPhone || [],
+                socialLinks: clubData.socialLinks || [""],
+                logoImg: null,
+                coverImg: null,
+            });
+        }
+    }, [editClub, clubData, setSectionName]);
+
+
+    const handleChange = (field, value) => {
+        setClub((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
+    };
+
+    const handleFileChange = (field, file) => {
+        setClub((prev) => ({
+            ...prev,
+            [field]: file,
+        }));
+        console.log(file);
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            setLoading(true);
             const formData = new FormData();
+
+            // Always append all fields whether editing or adding
             formData.append("clubName", club.clubName);
             formData.append("founderName", club.founderName);
             formData.append("description", club.description);
             formData.append("typeOfClub", club.typeOfClub);
             formData.append("dateOfEstablishment", club.dateOfEstablishment);
             formData.append("contactEmail", club.contactEmail);
-            formData.append("contactPhone",club.contactPhone);
+            formData.append("contactPhone", club.contactPhone);
             formData.append("socialLinks", JSON.stringify(club.socialLinks));
-            formData.append("formType", "club"); 
-    
+            formData.append("formType", "club");
+
             if (club.logoImg) {
                 formData.append("logoImg", club.logoImg, club.logoImg.name);
             }
@@ -58,11 +86,18 @@ const AddClub = () => {
             }
             console.log(club.coverImg);
 
-    
-            try {
+            if (editClub) {
+                const response = await editClubAPI(club._id, formData); // Make sure editClubAPI is correctly defined
+                if (response.status === 200) {
+                    showSuccessToast("Club updated successfully");
+                    setIsEditing(false);
+                } else {
+                    showErrorToast("Failed to update club");
+                }
+            } else {
                 const response = await addClub(formData);
                 if (response.status === 201) {
-                    alert("Club added successfully!");
+                    showSuccessToast("Club added successfully");
                     setClub({
                         clubName: "",
                         founderName: "",
@@ -76,29 +111,40 @@ const AddClub = () => {
                         coverImg: null,
                     });
                 } else {
-                    alert("Failed to add club");
+                    showErrorToast("Failed to add club");
                 }
-            } catch (error) {
-                console.error("Error:", error);
-                alert("An error occurred while adding the club");
             }
-        };
+        } catch (error) {
+            console.error("Error during submission:", error);
+            showErrorToast(error);
+            alert(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
 
     return (
         <div className="flex flex-col bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">Add Club</h2>
+            <h2 className="text-2xl flex justify-between font-semibold text-gray-800 dark:text-gray-100 mb-6">
+
+                    <p>
+                        {editClub ? "Edit Club" : "Add Club"}
+                    </p>
+                    {(editClub) && (<>
+                        <Button onClick={() => setIsEditing(false)} label="<- Back"></Button>
+                    </>)}
+
+                </h2>
 
                 {/* Club Details Section */}
                 <section>
                     <h3 className="text-xl font-medium text-gray-800 dark:text-gray-100 mb-4">Club Details</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label htmlFor="clubName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Club Name <span className="text-red-500">*</span>
-                            </label>
                             <InputField
+                                label="Club Name"
                                 id="clubName"
                                 value={club.clubName}
                                 onChange={(e) => handleChange("clubName", e.target.value)}
@@ -107,10 +153,8 @@ const AddClub = () => {
                             />
                         </div>
                         <div>
-                            <label htmlFor="founderName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Founder Name <span className="text-red-500">*</span>
-                            </label>
                             <InputField
+                                label="Founder Name"
                                 id="founderName"
                                 value={club.founderName}
                                 onChange={(e) => handleChange("founderName", e.target.value)}
@@ -120,10 +164,8 @@ const AddClub = () => {
                         </div>
                     </div>
                     <div className="mt-4">
-                        <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Description <span className="text-red-500">*</span>
-                        </label>
                         <TextArea
+                            label="Description"
                             id="description"
                             value={club.description}
                             onChange={(e) => handleChange("description", e.target.value)}
@@ -139,10 +181,8 @@ const AddClub = () => {
                     <h3 className="text-xl font-medium text-gray-800 dark:text-gray-100 mb-4">Additional Details</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label htmlFor="typeOfClub" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Type of Club <span className="text-red-500">*</span>
-                            </label>
                             <SelectField
+                                label="Type of Club"
                                 id="typeOfClub"
                                 value={club.typeOfClub}
                                 onChange={(e) => handleChange("typeOfClub", e.target.value)}
@@ -160,10 +200,8 @@ const AddClub = () => {
                             />
                         </div>
                         <div>
-                            <label htmlFor="dateOfEstablishment" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Date of Establishment
-                            </label>
-                            <input
+                            <InputField
+                                label="Date of Establishment"
                                 type="date"
                                 id="dateOfEstablishment"
                                 value={club.dateOfEstablishment}
@@ -175,10 +213,8 @@ const AddClub = () => {
                     </div>
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Contact Email
-                            </label>
                             <InputField
+                                label="Contact Email"
                                 id="contactEmail"
                                 type="email"
                                 value={club.contactEmail}
@@ -187,10 +223,8 @@ const AddClub = () => {
                             />
                         </div>
                         <div>
-                            <label htmlFor="contactPhone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Contact Phone (comma-separated)
-                            </label>
                             <InputField
+                                label="Contact Phone"
                                 id="contactPhone"
                                 value={club.contactPhone.join(", ")}
                                 onChange={(e) => {
@@ -202,10 +236,8 @@ const AddClub = () => {
                         </div>
                     </div>
                     <div className="mt-4">
-                        <label htmlFor="socialLinks" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Social Links (comma-separated)
-                        </label>
                         <InputField
+                            label="Social Links"
                             id="socialLinks"
                             value={club.socialLinks.join(", ")}
                             onChange={(e) =>
@@ -215,33 +247,32 @@ const AddClub = () => {
                         />
                     </div>
                     <div className="mt-4">
-                        <label htmlFor="logoImg" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Logo Image
-                        </label>
-                        <input
+
+                        <FileUpload
+                            label="Logo Image"
                             id="logoImg"
-                            type="file"
-                            onChange={(e) => handleFileChange("logoImg", e.target.files[0])}
-                            className="block w-full text-sm text-gray-500 dark:text-gray-400"
+                            files={club.logoImg}
+                            onChange={(e) => handleChange("logoImg", e)}
+                            accept="image/*"
                         />
+
                     </div>
 
                     <div className="mt-4">
-                        <label htmlFor="coverImg" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Cover Image
-                        </label>
-                        <input
+                        <FileUpload
+                            label="Cover Image"
                             id="coverImg"
-                            type="file"
-                            onChange={(e) => handleFileChange("coverImg", e.target.files[0])}
-                            className="block w-full text-sm text-gray-500 dark:text-gray-400"
+                            files={club.coverImg}
+                            onChange={(e) => handleChange("coverImg", e)}
+                            accept="image/*"
                         />
+
                     </div>
                 </section>
 
                 {/* Submit Button */}
                 <div className="text-center mt-6">
-                    <Button label="Submit" />
+                    <Button loading={loading} type="submit" label={editClub ? "Update" : "Submit"} />
                 </div>
             </form>
         </div>

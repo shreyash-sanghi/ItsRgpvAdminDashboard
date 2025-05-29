@@ -29,9 +29,9 @@ export const getPlacementById = async (id) => {
     }
 }
 
-export const editPlacement = async (id, data) => {
+export const editPlacementAPI = async (id, data) => {
     try {
-        const result = await Instance.put(`/${apiType}/edit-placement/${id}`, data);
+        const result = await formInstance.put(`/${apiType}/edit-placement/${id}`, data);
         return result;
     } catch (error) {
         throw error;

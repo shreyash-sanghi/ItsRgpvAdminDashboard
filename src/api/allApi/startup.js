@@ -15,7 +15,8 @@ export const addStartup = async (data) => {
 export const getAllStartup = async() => {
     try{
         const result = Instance.get(`${apiType}/get-startup`);
-        console.log(result);
+        console.log("Api result", result);
+        return result;
     } catch(error){
         throw error;
     }
@@ -30,16 +31,16 @@ export const getStartuplById = async (id) => {
     }
 }
 
-export const editStarup = async (id, data) => {
+export const editStartupAPI = async (id, data) => {
     try {
-        const result = await Instance.put(`/${apiType}/edit-startup/${id}`, data);
+        const result = await formInstance.put(`/${apiType}/edit-startup/${id}`, data);
         return result;
     } catch (error) {
         throw error;
     }
 }
 
-export const deleteHostel = async (id) => {
+export const deleteStartup = async (id) => {
     try {
         const result = await Instance.delete(`/${apiType}/delete-startup/${id}`);
         return result;

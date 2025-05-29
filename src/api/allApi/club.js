@@ -33,9 +33,9 @@ export const getClubById = async (id) => {
 }
 
 // done 
-export const editClub = async (id, data) => {
+export const editClubAPI = async (id, data) => {
     try {
-        const result = await Instance.put(`/${apiType}/edit-club/${id}`, data);
+        const result = await formInstance.put(`/${apiType}/edit-club/${id}`, data);
         return result;
     } catch (error) {
         throw error;
