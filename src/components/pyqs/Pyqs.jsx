@@ -10,7 +10,7 @@ const Pyqs = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await getAllPyq();
+        const response = await getAllPyqs();
         console.log("API Response:", response);
         
         if (response.status === 200) {
