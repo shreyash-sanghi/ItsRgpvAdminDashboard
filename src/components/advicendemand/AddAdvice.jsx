@@ -1,38 +1,58 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import Button from "../ui/button";
 import InputField from "../ui/input";
 import TextArea from "../ui/textarea";
 import FileUpload from "../ui/fileUpload";
-import { addDemand } from "../../api/allApi/demand";
+import { addDemand, editDemandAPI } from "../../api/allApi/demand";
 import Select from "../ui/select";
+import { UserContext } from "../../App";
+import { showSuccessToast, showErrorToast } from "../ui/toast"; // Make sure this path is correct
 
-const AddAdvice = () => {
+const AddAdvice = ({ editAddAdvice = false, AddAdviceData = {}, setIsEditing }) => {
+  const { setSectionName } = useContext(UserContext);
+  const [loading, setLoading] = useState(false);
+
   const [feedback, setFeedback] = useState({
     firstName: "",
     lastName: "",
     email: "",
-    year: "",                  // Note: Use string or number? Schema expects Number.
+    year: "",
     topicOfFeedback: "",
-    supportAttachment: [], 
-    rating: "",                // rating enum as string "1"-"5"
+    supportAttachment: [],
+    rating: "",
     demandTitle: "",
     description: "",
     progressCount: 1,
     hashtags: [],
-    demandStatus: "pending",   // default in schema
-    demandRaiseDate: new Date(), 
+    demandStatus: "pending",
+    demandRaiseDate: new Date().toISOString().split("T")[0],
     demandSubmitted: "",
     submittedTo: "",
     administrationResponse: "",
     demandUpdates: [],
   });
 
+  useEffect(() => {
+    setSectionName(editAddAdvice ? "Edit Advice" : "Add Advice");
+
+    if (editAddAdvice && AddAdviceData) {
+      const formattedDate = AddAdviceData.demandRaiseDate?.split("T")[0] || "";
+      setFeedback({
+        ...AddAdviceData,
+        demandRaiseDate: formattedDate,
+        hashtags: AddAdviceData.hashtags || [],
+        demandUpdates: AddAdviceData.demandUpdates || [],
+        supportAttachment: AddAdviceData.supportAttachment || [],
+      });
+    }
+  }, [editAddAdvice, AddAdviceData, setSectionName]);
+
   const handleChange = (field, value) => {
     setFeedback((prev) => ({
       ...prev,
       [field]: value,
     }));
-  
+
     if (field === "supportAttachment") {
       if (value.length > 0) {
         console.log(`Uploaded ${value.length} file(s):`, value.map((file) => file.name));
@@ -44,42 +64,56 @@ const AddAdvice = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    const formData = new FormData();
+  
     try {
-      const response = await addDemand(feedback);
-      if (response.status === 200) {
-        alert("Feedback submitted successfully!");
-        setFeedback({
-          firstName: "",
-          lastName: "",
-          email: "",
-          year: "",
-          topicOfFeedback: "",
-          supportAttachment: [],
-          rating: "",
-          demandTitle: "",
-          description: "",
-          progressCount: 1,
-          hashtags: [],
-          demandStatus: "pending",
-          demandRaiseDate: new Date(),
-          demandSubmitted: "",
-          submittedTo: "",
-          administrationResponse: "",
-          demandUpdates: [],
-        });
+      for (const key in feedback) {
+        const value = feedback[key];
+  
+        if (key === "supportAttachment" && value?.length) {
+          value.forEach((file) => {
+            formData.append("supportAttachment", file);
+          });
+        } else if (value instanceof Date) {
+          formData.append(key, value.toISOString().split("T")[0]);
+        } else if (Array.isArray(value)) {
+          value.forEach((item) => formData.append(key, item));
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, value);
+        }
+      }
+  
+      const res = editAddAdvice
+        ? await editDemandAPI(AddAdviceData._id, formData)
+        : await addDemand(formData);
+  
+      if (res?.status === 201) {
+        showSuccessToast("Demand Added");
+        if (setIsEditing) setIsEditing(false);
       } else {
-        alert("Failed to submit feedback. Please try again.");
+        showErrorToast(res?.data?.message || "Something went wrong");
       }
     } catch (error) {
-      console.error("Error submitting feedback:", error);
-      alert("An error occurred while submitting feedback.");
+      showErrorToast("Error submitting form");
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
+
 
   return (
     <div className="flex flex-col bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">User Advice Form</h2>
+      <h2 className="text-2xl flex justify-between font-semibold text-gray-800 dark:text-gray-100 mb-6">
+          <p>
+            {editAddAdvice ? "Edit Demand" : "Add Demand"}
+          </p>
+          {(editAddAdvice) && (<>
+            <Button onClick={() => setIsEditing(false)} label="<- Back"></Button>
+          </>)}
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <InputField
@@ -110,13 +144,13 @@ const AddAdvice = () => {
           required
         />
 
-        <InputField
+        <Select
           label="Year"
           id="year"
-          type="number"
           value={feedback.year}
           onChange={(e) => handleChange("year", e.target.value)}
-          placeholder="Enter year"
+          options={["1", "2", "3", "4"]}
+          placeholder="Select year"
           required
         />
 
@@ -130,10 +164,11 @@ const AddAdvice = () => {
         />
 
         <FileUpload
-          label="Support Attachement"
           id="supportAttachment"
-          files={feedback.supportAttachment}
+          label="Support Attachment"
+          multiple={true}
           onChange={(files) => handleChange("supportAttachment", files)}
+          accept="image/*"
         />
 
         <InputField
@@ -143,7 +178,6 @@ const AddAdvice = () => {
           value={feedback.rating}
           onChange={(e) => handleChange("rating", e.target.value)}
           placeholder="Enter rating (1 to 5)"
-          required={false}
         />
 
         <InputField
@@ -152,7 +186,6 @@ const AddAdvice = () => {
           value={feedback.demandTitle}
           onChange={(e) => handleChange("demandTitle", e.target.value)}
           placeholder="Enter demand title"
-          required={false}
         />
 
         <TextArea
@@ -166,14 +199,19 @@ const AddAdvice = () => {
         />
 
         <InputField
-          label="Progress Count"
+          label={
+            <>
+              Progress Count: <strong>{feedback.progressCount}</strong>
+            </>
+          }
+          type="range"
           id="progressCount"
-          type="number"
-          value={feedback.progressCount}
-          onChange={(e) => handleChange("progressCount", e.target.value)}
-          min={1}
+          min={0}
           max={100}
-          required
+          step={5}
+          value={feedback.progressCount}
+          onChange={(e) => handleChange("progressCount", Number(e.target.value))}
+          className="w-full accent-blue-600 cursor-pointer"
         />
 
         <InputField
@@ -184,25 +222,28 @@ const AddAdvice = () => {
             handleChange("hashtags", e.target.value.split(",").map((tag) => tag.trim()))
           }
           placeholder="Enter hashtags separated by commas"
-          required={false}
         />
 
-{/* dropdonw with enum */}
-<Select
-            id="demandStatus"
-            label="Demand Status"
-            value={department.departmentName}
-            onChange={(e) => handleChange("demandStatus", e.target.value)}
-            options={[
-              "approved",
-              "denied",
-              "pending",
-            ]}
-            placeholder="Demand Status"
-            required
-          />
+        <Select
+          id="demandStatus"
+          label="Demand Status"
+          value={feedback.demandStatus}
+          onChange={(e) => handleChange("demandStatus", e.target.value)}
+          options={["approved", "denied", "pending"]}
+          placeholder="Demand Status"
+          required
+        />
 
-        {/* demand raise date */}
+        <InputField
+          id="demandRaiseDate"
+          label="Demand Raise Date"
+          type="date"
+          placeholder="Enter Date"
+          value={feedback.demandRaiseDate}
+          onChange={(e) => handleChange("demandRaiseDate", e.target.value)}
+          max={new Date().toISOString().split("T")[0]}
+          required
+        />
 
         <InputField
           label="Demand Submitted"
@@ -210,7 +251,6 @@ const AddAdvice = () => {
           value={feedback.demandSubmitted}
           onChange={(e) => handleChange("demandSubmitted", e.target.value)}
           placeholder="Enter demand submitted info"
-          required={false}
         />
 
         <InputField
@@ -219,7 +259,6 @@ const AddAdvice = () => {
           value={feedback.submittedTo}
           onChange={(e) => handleChange("submittedTo", e.target.value)}
           placeholder="Enter submitted to"
-          required={false}
         />
 
         <TextArea
@@ -229,7 +268,6 @@ const AddAdvice = () => {
           onChange={(e) => handleChange("administrationResponse", e.target.value)}
           placeholder="Enter administration response"
           rows={3}
-          required={false}
         />
 
         <InputField
@@ -240,11 +278,10 @@ const AddAdvice = () => {
             handleChange("demandUpdates", e.target.value.split(",").map((update) => update.trim()))
           }
           placeholder="Enter demand updates separated by commas"
-          required={false}
         />
 
         <div className="text-center mt-6">
-          <Button label="Submit" />
+          <Button loading={loading} type="submit" label={editAddAdvice ? "Update" : "Submit"} />
         </div>
       </form>
     </div>

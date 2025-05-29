@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { getAllClubs, deleteClub } from "../../api/allApi/club";
-import { showErrorToast , showSuccessToast } from "../ui/toast";
+import { showErrorToast, showSuccessToast } from "../ui/toast";
 import { MdDelete } from "react-icons/md";
 import { DeleteConfirm } from '../ui/deleteConfirm';
 import ScreenLoader from '../ui/screenLoader';
 import Popup from '../ui/popup';
 import { FaEdit, FaEye } from 'react-icons/fa';
-import AddClub from './AddClub';  
+import AddClub from './AddClub';
 
 
 const Club = () => {
@@ -162,7 +162,7 @@ const Club = () => {
               <strong>Phone:</strong> {club.contactPhone?.join(", ")}
             </p>
             <p className="text-gray-600 dark:text-gray-300">
-              <strong>Social Links:</strong>{" "}
+              {/* <strong>Social Links:</strong>{" "}
               {club.socialLinks?.map((link, idx) => (
                 <a
                   key={idx}
@@ -173,8 +173,39 @@ const Club = () => {
                 >
                   Link {idx + 1}
                 </a>
-              ))}
+              ))} */}
             </p>
+            {/* Club Website */}
+            <p className="text-gray-600 dark:text-gray-300">
+              <strong>Club Website: </strong>
+              <a
+              href={club.clubWebsite}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500"
+            >
+              Click here
+            </a>
+            </p>
+            {/* LinkedIn */}
+            <a
+              href={club.linkedInLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500"
+            >
+              LinkedIn
+            </a>
+            <br />
+            {/* insta  */}
+            <a
+              href={club.instaLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500"
+            >
+              Instagram
+            </a>
 
             {club.logoImg && (
               <div className="mt-4">
@@ -223,7 +254,7 @@ const Club = () => {
             <p><strong>Established:</strong> {new Date(selectedClub.dateOfEstablishment).toLocaleDateString()}</p>
             <p><strong>Email:</strong> {selectedClub.contactEmail}</p>
             <p><strong>Phone:</strong> {selectedClub.contactPhone?.join(", ")}</p>
-            <p><strong>Social Links:</strong> 
+            {/* <p><strong>Social Links:</strong> 
               <div className="flex gap-2 flex-wrap">
                 {selectedClub.socialLinks?.map((link, i) => (
                   <a
@@ -237,16 +268,50 @@ const Club = () => {
                   </a>
                 ))}
               </div>
+            </p> */}
+
+            {/* Club Website */}
+            <p className="text-gray-600 dark:text-gray-300">
+              <strong>Club Website:</strong>
+               <a
+              href={selectedClub.clubWebsite}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500"
+            >
+              Click here
+            </a>
             </p>
+
+            {/* linkedin */}
+            <a
+              href={selectedClub.linkedInLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-700"
+            >
+              LinkedIn
+            </a>
+            <br />
+            {/* instagram */}
+            <a
+              href={selectedClub.instaLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-pink-500 hover:text-pink-700"
+            >
+              Instagram
+            </a>
+
 
             {selectedClub.logoImg && (
               <div>
                 <strong>Logo:</strong>
-                <img src={selectedClub.logoImg} alt="Logo" className="w-full h-32 object-contain mt-2" />
+                <img src={selectedClub.logoImg} alt="Logo" className="w-full h-32 object-contain mt-2 text-blue" />
               </div>
             )}
 
-{selectedClub.coverImg && (
+            {selectedClub.coverImg && (
               <div>
                 <strong>Cover:</strong>
                 <img src={selectedClub.coverImg} alt="Cover" className="w-full h-40 object-cover mt-2 rounded-lg" />

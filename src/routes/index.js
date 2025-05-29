@@ -31,6 +31,9 @@ import Notes from "../pages/notes/notes";
 import AddNotes from "../pages/notes/addnotes";
 import Scholarships from "../pages/scholarships/Scholarship";
 import AddScholarships from "../pages/scholarships/Addscholarships";
+import AddGallery from "../pages/gallery/AddGallery";
+import Gallery from "../pages/gallery/Gallery";
+
 
 const routes = [
   {
@@ -148,6 +151,14 @@ const routes = [
   {
     path: '/startups',
     component: Startups,
+  },
+  {
+    path: '/gallery',
+    component: Gallery,
+  },
+  {
+    path: '/add-gallery',
+    component: AddGallery 
   },
   {
     path: '/add-users',

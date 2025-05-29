@@ -247,6 +247,24 @@ const routes = [
     ],
 
   },
+  {
+    path: '/',
+    icon: <MdStar className="w-6 h-6" />,
+    name: 'Gallery',
+    submenu: [
+      {
+        path: '/gallery',
+        icon: <MdImage className="w-4 h-4" />,
+        name: 'Gallery',
+      }, 
+      {
+        path: '/add-Gallery',
+        icon: <MdInfo className="w-4 h-4" />,
+        name: 'Add gallery',
+      },
+    ],
+
+  },
 
   {
     path: '/',

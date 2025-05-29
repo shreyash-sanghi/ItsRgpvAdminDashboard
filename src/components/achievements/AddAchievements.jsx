@@ -4,14 +4,14 @@ import InputField from "../ui/input";
 import TextArea from "../ui/textarea";
 import Select from "../ui/select";
 import { UserContext } from "../../App";
-import { addAchievement, editAchievementAPI } from "../../api/allApi/achivement.js"; // Assume you have updateAchievement API
+import { addAchievement, editAchievementAPI } from "../../api/allApi/achivement.js";
 import FileUpload from "../ui/fileUpload.jsx";
 import { showSuccessToast, showErrorToast } from "../ui/toast.jsx";
 
 const AddAchievement = ({ editAchievement = false, AchievementData = {}, setIsEditing }) => {
-
   const { setSectionName } = useContext(UserContext);
   const [loading, setLoading] = useState(false);
+
   const [achievement, setAchievement] = useState({
     firstName: "",
     lastName: "",
@@ -29,10 +29,10 @@ const AddAchievement = ({ editAchievement = false, AchievementData = {}, setIsEd
     awards: "",
     photos: "",
     socialMediaLinks: [""],
+    mentor: [""]
   });
 
   const [tempLinks, setTempLinks] = useState("");
-
 
   useEffect(() => {
     setSectionName(editAchievement ? "Edit Achievement" : "Add Achievement");
@@ -43,12 +43,15 @@ const AddAchievement = ({ editAchievement = false, AchievementData = {}, setIsEd
 
       setAchievement({
         ...AchievementData,
-        achievementDate: formattedDate, // 👈 properly formatted date for the date input
+        achievementDate: formattedDate,
         fieldOfAchievement: AchievementData.fieldOfAchievement?.length
           ? AchievementData.fieldOfAchievement
           : [""],
         socialMediaLinks: AchievementData.socialMediaLinks?.length
           ? AchievementData.socialMediaLinks
+          : [""],
+        mentor: AchievementData.mentor?.length
+          ? AchievementData.mentor
           : [""],
       });
 
@@ -75,6 +78,13 @@ const AddAchievement = ({ editAchievement = false, AchievementData = {}, setIsEd
     });
   };
 
+  const handleStringArrayChange = (field, value) => {
+    setAchievement((prev) => ({
+      ...prev,
+      [field]: value.split(",").map((item) => item.trim()),
+    }));
+  };
+
   const handleAddField = (field) => {
     setAchievement((prev) => ({
       ...prev,
@@ -96,35 +106,35 @@ const AddAchievement = ({ editAchievement = false, AchievementData = {}, setIsEd
       [field]: file,
     }));
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       setLoading(true);
       const formData = new FormData();
-
-      // Function to check deep equality (shallow for arrays/strings here)
+  
       const isEqual = (key, val1, val2) => {
         if (Array.isArray(val1) && Array.isArray(val2)) {
           return JSON.stringify(val1) === JSON.stringify(val2);
         }
         return val1 === val2;
       };
-
+  
       if (editAchievement) {
         for (const [key, value] of Object.entries(achievement)) {
           const originalValue = AchievementData[key];
-
-          // Handle photos (file vs string)
+  
           if (key === "photos") {
-            if (key === "photos" && value) {
-              console.log(value)
+            if (value) {
               formData.append("photos", value);
             }
-          } else if (key === "fieldOfAchievement" || key === "socialMediaLinks") {
+          } else if (
+            key === "fieldOfAchievement" ||
+            key === "socialMediaLinks" ||
+            key === "mentor"
+          ) {
             if (!isEqual(key, value, originalValue)) {
-              value.forEach((item, i) => formData.append(`${key}[${i}]`, item));
+              formData.append(key, JSON.stringify(value)); // ✅ convert to JSON string
             }
           } else {
             if (!isEqual(key, value, originalValue)) {
@@ -132,31 +142,37 @@ const AddAchievement = ({ editAchievement = false, AchievementData = {}, setIsEd
             }
           }
         }
+  
+        formData.append("formType", "achievement");
+  
         for (let pair of formData.entries()) {
           console.log(`${pair[0]}:`, pair[1]);
         }
+  
         await editAchievementAPI(AchievementData._id, formData);
-        showSuccessToast("Achievement edited successfully")
+        showSuccessToast("Achievement edited successfully");
         setIsEditing(false);
       } else {
-        // New achievement: send everything
         for (const [key, value] of Object.entries(achievement)) {
-          if (key === "fieldOfAchievement" || key === "socialMediaLinks") {
-            value.forEach((item, i) => formData.append(`${key}[${i}]`, item));
+          if (
+            key === "fieldOfAchievement" ||
+            key === "socialMediaLinks" ||
+            key === "mentor"
+          ) {
+            formData.append(key, JSON.stringify(value)); // ✅ convert to JSON string
           } else if (key === "photos" && value) {
             formData.append("photos", value);
           } else {
             formData.append(key, value);
           }
         }
-
+  
         const response = await addAchievement(formData);
-        showSuccessToast("achievement added successfully")
+        showSuccessToast("Achievement added successfully");
       }
-
     } catch (error) {
       console.error("Error during submission:", error);
-      showErrorToast("something went wrong")
+      showErrorToast("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -321,13 +337,8 @@ const AddAchievement = ({ editAchievement = false, AchievementData = {}, setIsEd
 
         {/* Social Media Links */}
         <div>
-          <label
-            htmlFor="socialMediaLinks"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-          >
-            Social Media Links (separate by spaces)
-          </label>
           <InputField
+            label="Social Media Links (seprated by spaces"
             id="socialMediaLinks"
             value={tempLinks}
             onChange={(e) => setTempLinks(e.target.value)}
@@ -340,6 +351,17 @@ const AddAchievement = ({ editAchievement = false, AchievementData = {}, setIsEd
               )
             }
             placeholder="Enter links separated by spaces"
+          />
+        </div>
+        {/* mentors */}
+        <div>
+          <InputField
+            label="Mentors Name"
+            id="mentor"
+            type="text"  // Explicitly set type to text
+            value={achievement.mentor.join(", ")}
+            placeholder="Enter Mentors (comma-separated)"
+            onChange={(e) => handleStringArrayChange("mentor", e.target.value)}
           />
         </div>
 

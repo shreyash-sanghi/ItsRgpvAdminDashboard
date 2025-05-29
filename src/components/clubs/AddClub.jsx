@@ -8,126 +8,142 @@ import { showSuccessToast, showErrorToast } from "../ui/toast";
 import FileUpload from "../ui/fileUpload";
 import { UserContext } from "../../App";
 
-
 const AddClub = ({ editClub = false, clubData = {}, setIsEditing }) => {
+  const { setSectionName } = useContext(UserContext);
 
-    const { setSectionName } = useContext(UserContext);
-    const [loading, setLoading] = useState(false);
-    const [club, setClub] = useState({
-        clubName: "",
-        founderName: "",
-        description: "",
-        typeOfClub: "",
-        dateOfEstablishment: "",
-        contactEmail: "",
-        contactPhone: [],
-        socialLinks: [""],
+  const [loading, setLoading] = useState(false);
+  const [club, setClub] = useState({
+    clubName: "",
+    founderName: "",
+    description: "",
+    typeOfClub: "",
+    dateOfEstablishment: "",
+    contactEmail: "",
+    contactPhone: [],
+    socialLinks: [""],
+    linkedInLink: "",
+    instaLink: "",
+    logoImg: null,
+    coverImg: null,
+    featuredTagline: [""],
+    clubWebsite:""
+  });
+
+  useEffect(() => {
+    setSectionName(editClub ? "Edit Club" : "Add Club");
+
+    if (editClub && clubData) {
+      setClub({
+        ...clubData,
+        contactPhone: clubData.contactPhone || [],
         logoImg: null,
         coverImg: null,
-    });
+      });
+    }
+  }, [editClub, clubData, setSectionName]);
 
+  const handleChange = (field, value) => {
+    setClub((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
-    useEffect(() => {
+  const handleArrayChange = (field, value) => {
+    // Split by comma and trim spaces for array fields
+    setClub((prev) => ({
+      ...prev,
+      [field]: value.split(",").map((item) => item.trim()),
+    }));
+  };
 
-        setSectionName(editClub ? "Edit Club" : "Add Club");
+  const handleFileChange = (field, file) => {
+    setClub((prev) => ({
+      ...prev,
+      [field]: file,
+    }));
+    console.log(file);
+  };
 
-        if (editClub && clubData) {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const formData = new FormData();
 
-            setClub({
-                ...clubData,
-                contactPhone: clubData.contactPhone || [],
-                socialLinks: clubData.socialLinks || [""],
-                logoImg: null,
-                coverImg: null,
-            });
+      // Append all fields for both add and edit
+      formData.append("clubName", club.clubName);
+      formData.append("founderName", club.founderName);
+      formData.append("description", club.description);
+      formData.append("typeOfClub", club.typeOfClub);
+      formData.append("dateOfEstablishment", club.dateOfEstablishment);
+      formData.append("contactEmail", club.contactEmail);
+
+      // contactPhone is an array, convert to string or JSON
+      formData.append("contactPhone", club.contactPhone);
+
+      formData.append("linkedInLink", club.linkedInLink);
+      formData.append("instaLink", club.instaLink);
+      formData.append("featuredTagline", JSON.stringify(club.featuredTagline));
+      formData.append("formType", "club");
+      formData.append("clubWebsite",club.clubWebsite)
+
+      if (club.logoImg) {
+        formData.append("logoImg", club.logoImg, club.logoImg.name);
+      }
+      console.log(club.logoImg);
+
+      if (club.coverImg) {
+        formData.append("coverImg", club.coverImg, club.coverImg.name);
+      }
+      console.log(club.coverImg);
+
+      if (editClub) {
+        const response = await editClubAPI(club._id, formData);
+        if (response.status === 200) {
+          showSuccessToast("Club updated successfully");
+          setIsEditing(false);
+        } else {
+          showErrorToast("Failed to update club");
         }
-    }, [editClub, clubData, setSectionName]);
-
-
-    const handleChange = (field, value) => {
-        setClub((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
-    };
-
-    const handleFileChange = (field, file) => {
-        setClub((prev) => ({
-            ...prev,
-            [field]: file,
-        }));
-        console.log(file);
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            setLoading(true);
-            const formData = new FormData();
-
-            // Always append all fields whether editing or adding
-            formData.append("clubName", club.clubName);
-            formData.append("founderName", club.founderName);
-            formData.append("description", club.description);
-            formData.append("typeOfClub", club.typeOfClub);
-            formData.append("dateOfEstablishment", club.dateOfEstablishment);
-            formData.append("contactEmail", club.contactEmail);
-            formData.append("contactPhone", club.contactPhone);
-            formData.append("socialLinks", JSON.stringify(club.socialLinks));
-            formData.append("formType", "club");
-
-            if (club.logoImg) {
-                formData.append("logoImg", club.logoImg, club.logoImg.name);
-            }
-            console.log(club.logoImg);
-            
-            if(club.coverImg){
-                formData.append("coverImg", club.coverImg, club.coverImg.name)
-            }
-            console.log(club.coverImg);
-
-            if (editClub) {
-                const response = await editClubAPI(club._id, formData); // Make sure editClubAPI is correctly defined
-                if (response.status === 200) {
-                    showSuccessToast("Club updated successfully");
-                    setIsEditing(false);
-                } else {
-                    showErrorToast("Failed to update club");
-                }
-            } else {
-                const response = await addClub(formData);
-                if (response.status === 201) {
-                    showSuccessToast("Club added successfully");
-                    setClub({
-                        clubName: "",
-                        founderName: "",
-                        description: "",
-                        typeOfClub: "",
-                        dateOfEstablishment: "",
-                        contactEmail: "",
-                        contactPhone: [],
-                        socialLinks: [""],
-                        logoImg: null,
-                        coverImg: null,
-                    });
-                } else {
-                    showErrorToast("Failed to add club");
-                }
-            }
-        } catch (error) {
-            console.error("Error during submission:", error);
-            showErrorToast(error);
-            alert(error);
-        } finally {
-            setLoading(false);
+      } else {
+        const response = await addClub(formData);
+        if (response.status === 201) {
+          showSuccessToast("Club added successfully");
+          setClub({
+            clubName: "",
+            founderName: "",
+            description: "",
+            typeOfClub: "",
+            dateOfEstablishment: "",
+            contactEmail: "",
+            contactPhone: [],
+            linkedInLink: "",
+            instaLink: "",
+            logoImg: null,
+            coverImg: null,
+            featuredTagline: [],
+            clubWebsite: ""
+          });
+        } else {
+          showErrorToast("Failed to add club");
         }
-    };
+      }
+    } catch (error) {
+      console.error("Error during submission:", error);
+      showErrorToast(error);
+      alert(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
 
     return (
         <div className="flex flex-col bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-            <h2 className="text-2xl flex justify-between font-semibold text-gray-800 dark:text-gray-100 mb-6">
+                <h2 className="text-2xl flex justify-between font-semibold text-gray-800 dark:text-gray-100 mb-6">
 
                     <p>
                         {editClub ? "Edit Club" : "Add Club"}
@@ -236,7 +252,7 @@ const AddClub = ({ editClub = false, clubData = {}, setIsEditing }) => {
                         </div>
                     </div>
                     <div className="mt-4">
-                        <InputField
+                        {/* <InputField
                             label="Social Links"
                             id="socialLinks"
                             value={club.socialLinks.join(", ")}
@@ -244,7 +260,44 @@ const AddClub = ({ editClub = false, clubData = {}, setIsEditing }) => {
                                 handleChange("socialLinks", e.target.value.split(",").map((link) => link.trim()))
                             }
                             placeholder="Enter social links"
+                        /> */}
+                        <InputField
+                            label="Club Website"
+                            id="clubWebsite"
+                            value={club.clubWebsite}
+                            onChange={(e) => handleChange("clubWebsite", e.target.value)}
+                            placeholder="Enter Club Website"
                         />
+                         <div className="mt-4">
+                        <InputField
+                            label="Linked-In Link"
+                            id="linkedInLink"
+                            value={club.linkedInLink}
+                            onChange={(e) => handleChange("linkedInLink", e.target.value)}
+                            placeholder="Enter Linked-In Url"
+                        />
+</div>
+                        <div className="mt-4">
+                            <InputField
+                                label="Intagram Handle"
+                                id="instaLink"
+                                value={club.instaLink}
+                                onChange={(e) => handleChange("instaLink", e.target.value)}
+                                placeholder="Enter Instagram Profile"
+                            />
+                        </div>
+                        <div className="mt-4">
+                            <InputField
+                                label="Featured at"
+                                id="featuredTagline"
+                                value={club.featuredTagline.join(", ")}
+                                onChange={(e) => {
+                                   handleArrayChange("featuredTagline", e.target.value)
+                                }}
+                                placeholder="Enter where you got featured, separated by commas"
+                            />
+                        </div>
+
                     </div>
                     <div className="mt-4">
 

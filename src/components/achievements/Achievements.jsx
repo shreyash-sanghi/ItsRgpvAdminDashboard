@@ -170,7 +170,6 @@ const Achievements = () => {
               <p><strong>Award:</strong> {ach.awards}</p>
               <p><strong>Date:</strong> {new Date(ach.achievementDate).toLocaleDateString()}</p>
               <p><strong>Field:</strong> {ach.fieldOfAchievement.join(', ')}</p>
-              <p><strong>Recognition:</strong> {ach.recognitionLevel.join(', ')}</p>
               <p><strong>Branch:</strong> {ach.branch}</p>
               <p><strong>Department:</strong> {ach.department}</p>
               <p><strong>Semester:</strong> {ach.semester}</p>
@@ -214,7 +213,6 @@ const Achievements = () => {
             <p><strong>Award:</strong> {selectedAchievement.awards}</p>
             <p><strong>Date:</strong> {new Date(selectedAchievement.achievementDate).toLocaleDateString()}</p>
             <p><strong>Field:</strong> {selectedAchievement.fieldOfAchievement.join(', ')}</p>
-            <p><strong>Recognition:</strong> {selectedAchievement.recognitionLevel.join(', ')}</p>
             <p><strong>Branch:</strong> {selectedAchievement.branch}</p>
             <p><strong>Department:</strong> {selectedAchievement.department}</p>
             <p><strong>Semester:</strong> {selectedAchievement.semester}</p>

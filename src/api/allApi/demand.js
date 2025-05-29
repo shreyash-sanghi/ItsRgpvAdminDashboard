@@ -1,10 +1,10 @@
-import {Instance} from "../axios";
+import {formInstance, Instance} from "../axios";
 
 const apiType = "demand"
 
 export const addDemand = async (data) => {
     try {
-        const result = await Instance.post(`/${apiType}/add-demand`,data);
+        const result = await formInstance.post(`/${apiType}/add-demand`,data);
         return result;
     } catch (error) {
         throw error;
@@ -29,9 +29,10 @@ export const getDemandById = async (id) => {
     }
 }   
 
-export const editDemand = async (id,data) => {
+export const editDemandAPI = async (id,data) => {
     try {
-        const result = await Instance.put(`/${apiType}/edit-demand/${id}`,data);
+        const result = await formInstance.put(`/${apiType}/edit-demand/${id}`,data);
+        return result;
     } catch (error) {
         throw error;
     }
