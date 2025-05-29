@@ -45,6 +45,27 @@ const Pyqs = () => {
   };
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllPyqs();
+        console.log("API Response:", response);
+        
+        if (response.status === 200) {
+          const data = response.data?.data || [];
+          console.log("Processed Data:", data);
+          setPyqs(data);
+        } else {
+          setError("Failed to fetch PYQs");
+          console.error("Error fetching PYQs:", response);
+        }
+      } catch (err) {
+        setError("An error occurred while fetching PYQs");
+        console.error("Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchData();
   }, []);
 
