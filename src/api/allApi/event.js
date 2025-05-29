@@ -30,9 +30,9 @@ export const getEventById = async (id) => {
     }
 }
 
-export const editEvent = async (id, data) => {
+export const editEventAPI = async (id, data) => {
     try {
-        const result = await Instance.put(`/${apiType}/edit-event/${id}`, data);
+        const result = await formInstance.put(`/${apiType}/edit-event/${id}`, data);
         return result;
     } catch (error) {
         throw error;

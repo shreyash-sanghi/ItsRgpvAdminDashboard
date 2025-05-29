@@ -1,10 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Button from "../ui/button";
 import InputField from "../ui/input";
 import FileUpload from "../ui/fileUpload";
-import { addBook } from "../../api/allApi/books";
+import { addBook, editBookAPI} from "../../api/allApi/books";
+import Select from "../ui/select";
+import { showSuccessToast, showErrorToast } from "../ui/toast.jsx";
+import { UserContext } from "../../App.jsx";
 
-const AddBook = () => {
+
+const AddBook = ({ editBook = false, BookData = {}, setIsEditing }) => {
+  const { setSectionName } = useContext(UserContext);
+  const [loading, setLoading] = useState(false);
   const [book, setBook] = useState({
     author: "",
     title: "",
@@ -18,6 +24,31 @@ const AddBook = () => {
     publicationYear: "",
   });
 
+  // Keep original book data for comparison
+  const [originalBook, setOriginalBook] = useState(null);
+
+  useEffect(() => {
+    setSectionName(editBook ? "Edit Book" : "Add Book");
+
+    if (editBook && BookData) {
+
+      setBook({
+        ...BookData,
+        author: BookData.author || "",
+        title: BookData.title || "",
+        description: BookData.description || "",
+        department: BookData.department || "",
+        semester: BookData.semester || "",
+        tags: BookData.tags || [],
+        bookImg: null, // don't preload file input
+        bookUrl: BookData.bookUrl || [],
+        availability: BookData.availability || "",
+        publicationYear: BookData.publicationYear || "",
+      });
+      setOriginalBook({ ...BookData });
+    }
+  }, [editBook, BookData, setSectionName]);
+
   const handleChange = (field, value) => {
     setBook((prev) => ({
       ...prev,
@@ -25,144 +56,192 @@ const AddBook = () => {
     }));
   };
 
+  const handleFileUpload = (field, file) => {
+    setBook((prev) => ({
+      ...prev,
+      [field]: file,
+    }));
+  };
 
-const handleFileUpload = (field, file) => {
-  setBook((prev) => ({
-    ...prev,
-    [field]: file,  // Directly assign the file instead of an array
-  }));
-};
+  // Compare two values deeply, for arrays check stringified equality
+  const isEqual = (val1, val2) => {
+    if (Array.isArray(val1) && Array.isArray(val2)) {
+      return JSON.stringify(val1) === JSON.stringify(val2);
+    }
+    return val1 === val2;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+
     try {
-      const formData = new FormData();
+      setLoading(true);
 
-      // Add required fields
-      formData.append("title", book.title);
-      formData.append("author", book.author);
-      formData.append("description", book.description);
-      formData.append("department", book.department);
-      formData.append("semester", book.semester);
-      formData.append("availability", book.availability);
-      formData.append("publicationYear", book.publicationYear);
-      formData.append("formType", "book");
+      if (editBook && originalBook) {
+        // Build form data with only changed fields
+        const formData = new FormData();
+        const fieldsToCheck = [
+          "author",
+          "title",
+          "description",
+          "department",
+          "semester",
+          "tags",
+          "bookUrl",
+          "availability",
+          "publicationYear",
+        ];
 
-      // Handle optional fields
-      if (book.bookImg) {
-        formData.append("bookImg", book.bookImg, book.bookImg.name);
-      }
+        let hasChanges = false;
 
-      console.log("Book urrrrllllll", book.bookImg);
+        for (const field of fieldsToCheck) {
+          if (!isEqual(book[field], originalBook[field])) {
+            hasChanges = true;
+            if (Array.isArray(book[field])) {
+              formData.append(field, JSON.stringify(book[field]));
+            } else {
+              formData.append(field, book[field]);
+            }
+          }
+        }
+        // cloudinary folder
+        formData.append("formType", "book");
 
-      if (book.tags && book.tags.length > 0) {
-        formData.append("tags", JSON.stringify(book.tags));
-      }
-      if (book.bookUrl && book.bookUrl.length > 0) {
-        formData.append("bookUrl", JSON.stringify(book.bookUrl));
-      }
+        // Check if bookImg changed (a new file)
+        if (book.bookImg) {
+          hasChanges = true;
+          formData.append("bookImg", book.bookImg, book.bookImg.name);
+        }
 
-      const response = await addBook(formData);
-      if (response) {
-        alert("Book added successfully!");
-        // Reset form
-        setBook({
-          author: "",
-          title: "",
-          description: "",
-          department: "",
-          semester: "",
-          tags: [],
-          bookImg: null,
-          bookUrl: [],
-          availability: "",
-          publicationYear: "",
-        });
+        if (!hasChanges) {
+          showErrorToast("No changes detected to update");
+          setLoading(false);
+          return;
+        }
+
+        // Send partial update to backend
+        const response = await editBookAPI(BookData._id, formData);
+        if (response) {
+          showSuccessToast("Book edited successfully");
+          if (setIsEditing) setIsEditing(false);
+        }
+      } else {
+        // For adding new book, send full form data
+        const formData = new FormData();
+        for (const key in book) {
+          if (book[key]) {
+            if (Array.isArray(book[key])) {
+              formData.append(key, JSON.stringify(book[key]));
+            } else if (key === "bookImg") {
+              formData.append(key, book[key], book[key].name);
+            } else {
+              formData.append(key, book[key]);
+            }
+          }
+        }
+        formData.append("formType", "book");
+
+        const response = await addBook(formData);
+        if (response) {
+          showSuccessToast("Book uploaded successfully");
+          setBook({
+            author: "",
+            title: "",
+            description: "",
+            department: "",
+            semester: "",
+            tags: [],
+            bookImg: null,
+            bookUrl: [],
+            availability: "",
+            publicationYear: "",
+          });
+        }
       }
     } catch (error) {
-      console.error("Error adding book:", error);
-      alert("Error: " + (error?.response?.data?.message || error.message));
+      console.error("Error adding/editing book:", error);
+      const errorMessage =
+        error?.response?.data?.message || "Book upload failed. Please try again.";
+      showErrorToast(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="flex flex-col bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">Add Book</h2>
+      <h2 className="text-2xl flex justify-between font-semibold text-gray-800 dark:text-gray-100 mb-6">
+        <p>
+            {editBook ? "Edit Book" : "Add Book"}
+          </p>
+          {(editBook) && (<>
+            <Button onClick={() => setIsEditing(false)} label="<- Back"></Button>
+          </>)}
+        </h2>
 
         {/* Book Details Section */}
         <section>
-          <h3 className="text-xl font-medium text-gray-800 dark:text-gray-100 mb-4">Book Details</h3>
+          <h3 className="text-xl font-medium text-gray-800 dark:text-gray-100 mb-4">
+            Book Details
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <InputField
-                id="title"
-                value={book.title}
-                onChange={(e) => handleChange("title", e.target.value)}
-                placeholder="Enter book title"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="author" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Author <span className="text-red-500">*</span>
-              </label>
-              <InputField
-                id="author"
-                value={book.author}
-                onChange={(e) => handleChange("author", e.target.value)}
-                placeholder="Enter author name"
-                required
-              />
-            </div>
+            <InputField
+              id="title"
+              label="Title"
+              value={book.title}
+              onChange={(e) => handleChange("title", e.target.value)}
+              placeholder="Enter book title"
+              required
+            />
+            <InputField
+              id="author"
+              label="Author"
+              value={book.author}
+              onChange={(e) => handleChange("author", e.target.value)}
+              placeholder="Enter author name"
+              required
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            {/* dropdown for department */}
+            <Select
+              id="department"
+              label="Department"
+              value={book.department}
+              onChange={(e) => handleChange("department", e.target.value)}
+              options={[
+                "Computer Science",
+                "Information Technology",
+                "Electronics",
+                "Mechanical",
+                "Civil",
+                "Electrical and Electronics",
+                "Petrochemical",
+                "Automobile"
+              ]}
+              placeholder="Select Department"
+              required
+            />
             <div>
-              <label htmlFor="department" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Department <span className="text-red-500">*</span>
-              </label>
-              <InputField
-                id="department"
-                value={book.department}
-                onChange={(e) => handleChange("department", e.target.value)}
-                placeholder="Enter department"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="semester" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Semester <span className="text-red-500">*</span>
-              </label>
-              <select
+              <Select
                 id="semester"
+                label="Semester"
                 value={book.semester}
                 onChange={(e) => handleChange("semester", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                options={[1, 2, 3, 4, 5, 6, 7, 8]}
+                placeholder="Select semester"
                 required
-              >
-                <option value="">Select semester</option>
-                <option value="1">I</option>
-                <option value="2">II</option>
-                <option value="3">III</option>
-                <option value="4">IV</option>
-                <option value="5">V</option>
-                <option value="6">VI</option>
-                <option value="7">VII</option>
-                <option value="8">VIII</option>
-              </select>
+              />
             </div>
           </div>
 
           <div className="mt-4">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description <span className="text-red-500">*</span>
-            </label>
             <InputField
               id="description"
+              label="Description (Minimum 20 words)"
               value={book.description}
               onChange={(e) => handleChange("description", e.target.value)}
               placeholder="Enter description"
@@ -173,65 +252,62 @@ const handleFileUpload = (field, file) => {
 
         {/* Additional Details Section */}
         <section className="mt-6">
-          <h3 className="text-xl font-medium text-gray-800 dark:text-gray-100 mb-4">Additional Details</h3>
+          <h3 className="text-xl font-medium text-gray-800 dark:text-gray-100 mb-4">
+            Additional Details
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="tags" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Tags
-              </label>
-              <InputField
-                id="tags"
-                value={book.tags.join(", ")}
-                onChange={(e) => handleChange("tags", e.target.value.split(",").map(tag => tag.trim()))}
-                placeholder="Enter tags (comma-separated)"
-              />
-            </div>
-            <div>
-              <label htmlFor="availability" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Availability <span className="text-red-500">*</span>
-              </label>
-              <InputField
-                id="availability"
-                value={book.availability}
-                onChange={(e) => handleChange("availability", e.target.value)}
-                placeholder="Enter availability status"
-                required
-              />
-            </div>
+            <InputField
+              id="tags"
+              label="Tags"
+              value={book.tags.join(", ")}
+              onChange={(e) =>
+                handleChange(
+                  "tags",
+                  e.target.value.split(",").map((tag) => tag.trim())
+                )
+              }
+              placeholder="Enter tags (comma-separated)"
+            />
+            <InputField
+              id="availability"
+              label="Availability"
+              value={book.availability}
+              onChange={(e) => handleChange("availability", e.target.value)}
+              placeholder="Enter availability status"
+              required
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div>
-              <label htmlFor="bookImg" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Thumbnail Picture
-              </label>
               <FileUpload
+                label="Book Image"
                 id="bookImg"
                 files={book.bookImg}
                 onChange={(files) => handleFileUpload("bookImg", files)}
               />
             </div>
-            <div>
-              <label htmlFor="publicationYear" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Publication Year
-              </label>
-              <InputField
-                id="publicationYear"
-                value={book.publicationYear}
-                onChange={(e) => handleChange("publicationYear", e.target.value)}
-                placeholder="Enter publication year"
-              />
-            </div>
+            <InputField
+              id="publicationYear"
+              label="Publication Year"
+              type="number"
+              value={book.publicationYear}
+              onChange={(e) => handleChange("publicationYear", e.target.value)}
+              placeholder="Enter publication year"
+            />
           </div>
 
           <div className="mt-4">
-            <label htmlFor="bookUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Book URLs
-            </label>
             <InputField
               id="bookUrl"
+              label="Book URLs"
               value={book.bookUrl.join(", ")}
-              onChange={(e) => handleChange("bookUrl", e.target.value.split(",").map((url) => url.trim()))}
+              onChange={(e) =>
+                handleChange(
+                  "bookUrl",
+                  e.target.value.split(",").map((url) => url.trim())
+                )
+              }
               placeholder="Enter book URLs (comma-separated)"
             />
           </div>
@@ -239,11 +315,11 @@ const handleFileUpload = (field, file) => {
 
         {/* Submit Button */}
         <div className="text-center mt-6">
-          <Button label="Submit" />
+          <Button loading={loading} label="Submit" type="submit" />
         </div>
       </form>
     </div>
   );
 };
 
-export default AddBook; 
+export default AddBook;

@@ -30,9 +30,9 @@ export const getPyqById = async (id) => {
     }
 }
 
-export const editPyq = async (id, data) => {
+export const editPyqAPI = async (id, data) => {
     try {
-        const result = await Instance.put(`/${apiType}/edit-pyq/${id}`, data);
+        const result = await formInstance.put(`/${apiType}/edit-pyq/${id}`, data);
         return result;
     } catch (error) {
         throw error;

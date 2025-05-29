@@ -34,9 +34,9 @@ export const getNotesById = async (id) => {
 }
 
 // done
-export const editNotes = async (id, data) => {
+export const editNotesAPI = async (id, data) => {
     try {
-        const result = await Instance.put(`/${apiType}/edit-notes/${id}`, data);
+        const result = await formInstance.put(`/${apiType}/edit-notes/${id}`, data);
         return result;
     } catch (error) {
         throw error;
